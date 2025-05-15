@@ -38,6 +38,15 @@ public class Piece {
   }
 
   /**
+   * Ngecek apakah Block ini orientasinya horizontal atau vertikal.
+   * 
+   * @return true jika horizontal, false jika vertikal
+   */
+  public boolean isHorizontal() {
+    return shape.length == 1 || shape[0].length > shape.length;
+  }
+
+  /**
    * Nampilin Block ke layar konsol.
    * Buat ngeliat gimana bentuk Blocknya kalo diprint.
    */
