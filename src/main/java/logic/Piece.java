@@ -1,22 +1,27 @@
 package logic;
 
+import java.util.Objects;
+
 /**
  * Kelas Piece ini buat nampung Block yang bakal ditaruh di papan.
- * Masing-masing Block punya label dan bentuk khusus.
+ * Masing-masing Block punya label dan orientasi khusus.
  */
 public class Piece {
-  final private char label;
-  final private boolean[][] shape;
+  private final char label;           // Character identifier for this piece
+  private final int size;             // Length of the piece (2 or 3 units)
+  private final boolean isHorizontal; // Orientation: true for horizontal, false for vertical
 
   /**
-   * Bikin Block baru dengan label dan bentuk yang dikasih.
+   * Bikin Block baru dengan properti yang ditentukan.
    * 
    * @param label Karakter yang dipake buat nunjukin Block ini
-   * @param shape Bentuk 2D dari Block ini (true artinya ada, false artinya kosong)
+   * @param size Panjang dari Block (2 atau 3 unit)
+   * @param isHorizontal Orientasi (true untuk horizontal, false untuk vertikal)
    */
-  public Piece(char label, boolean[][] shape) {
+  public Piece(char label, int size, boolean isHorizontal) {
     this.label = label;
-    this.shape = shape;
+    this.size = size;
+    this.isHorizontal = isHorizontal;
   }
 
   /**
@@ -29,33 +34,69 @@ public class Piece {
   }
 
   /**
-   * Ngambil bentuk dari Block ini.
+   * Ngambil ukuran dari Block ini.
    * 
-   * @return Array 2D yang nunjukin bentuk Block
+   * @return Panjang Block (2 atau 3 unit)
    */
-  public boolean[][] getShape() {
-    return shape;
+  public int getSize() {
+    return size;
   }
 
   /**
-   * Ngecek apakah Block ini orientasinya horizontal atau vertikal.
+   * Ngecek apakah Block ini orientasinya horizontal.
    * 
    * @return true jika horizontal, false jika vertikal
    */
   public boolean isHorizontal() {
-    return shape.length == 1 || shape[0].length > shape.length;
+    return isHorizontal;
   }
 
   /**
-   * Nampilin Block ke layar konsol.
-   * Buat ngeliat gimana bentuk Blocknya kalo diprint.
+   * Membuat salinan dari Block ini.
+   * 
+   * @return Block baru dengan properti yang sama
    */
-  public void printBlock() {
-    for (boolean[] row: shape) {
-      for (boolean cell: row) {
-        System.out.print(cell ? label : ' ');
-      }
-      System.out.println();
-    }
+  public Piece copy() {
+    return new Piece(label, size, isHorizontal);
+  }
+
+  /**
+   * Membandingkan Block ini dengan objek lain.
+   * 
+   * @param obj Objek yang dibandingkan
+   * @return true jika Block memiliki properti yang sama
+   */
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) return true;
+    if (obj == null || getClass() != obj.getClass()) return false;
+    
+    Piece other = (Piece) obj;
+    
+    return 
+          this.label == other.label &&
+          this.size == other.size &&
+          this.isHorizontal == other.isHorizontal;
+  }
+
+  /**
+   * Menghasilkan hash code berdasarkan properti Block.
+   * 
+   * @return Hash code
+   */
+  @Override
+  public int hashCode() {
+    return Objects.hash(label, size, isHorizontal);
+  }
+  
+  /**
+   * Menghasilkan representasi string dari Block ini.
+   * 
+   * @return String yang menggambarkan Block
+   */
+  @Override
+  public String toString() {
+    String orientation = isHorizontal ? "horizontal" : "vertikal";
+    return "Block " + label + " (" + orientation + ", ukuran " + size + ")";
   }
 }

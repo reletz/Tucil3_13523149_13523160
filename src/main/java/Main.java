@@ -1,6 +1,6 @@
 import logic.Board;
+import logic.GameManager;
 import logic.GameState;
-import util.GameManager;
 
 /**
  * Kelas Main untuk aplikasi Rush Hour Solver.

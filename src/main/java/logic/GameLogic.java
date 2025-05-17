@@ -1,238 +1,280 @@
 package logic;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Kelas GameLogic buat mengatur operasi logika permainan.
  * Menghandle penempatan dan pergerakan Block di papan.
  */
 public class GameLogic {
+  
+  /**
+   * Membuat salinan dari GameState.
+   * 
+   * @param gameState GameState yang akan disalin
+   * @return Salinan GameState baru
+   */
+  public static GameState copyGameState(GameState gameState) {
+    Board boardCopy = gameState.getBoard(); // Board is immutable
     
-    /**
-     * Taruh Block di papan pada posisi tertentu.
-     * 
-     * @param board Papan permainan
-     * @param piece Block yang akan ditaruh
-     * @param topLeftX Koordinat X ujung kiri atas piece
-     * @param topLeftY Koordinat Y ujung kiri atas piece
-     * @return true jika berhasil menaruh Block, false jika gagal (posisi sudah terisi)
-     */
-    public static boolean placePiece(Board board, Piece piece, int topLeftX, int topLeftY) {
-        char[][] grid = board.getGrid();
-        boolean[][] shape = piece.getShape();
-        
-        // Validasi posisi
-        for (int i = 0; i < shape.length; i++) {
-            for (int j = 0; j < shape[i].length; j++) {
-                if (shape[i][j]) {
-                    int y = topLeftY + i;
-                    int x = topLeftX + j;
-                    
-                    // Validasi batas papan
-                    if (y < 0 || y >= grid.length || x < 0 || x >= grid[0].length) {
-                        return false;
-                    }
-                    
-                    // Validasi cell kosong
-                    if (grid[y][x] != ' ') {
-                        return false;
-                    }
-                }
-            }
-        }
-        
-        // Taruh Block ke papan
-        for (int i = 0; i < shape.length; i++) {
-            for (int j = 0; j < shape[i].length; j++) {
-                if (shape[i][j]) {
-                    grid[topLeftY + i][topLeftX + j] = piece.getLabel();
-                }
-            }
-        }
-        
-        return true;
+    // Copy pieces
+    Map<Character, GameState.PieceState> piecesCopy = new HashMap<>();
+    for (Map.Entry<Character, GameState.PieceState> entry : gameState.getPieces().entrySet()) {
+      GameState.PieceState ps = entry.getValue();
+      piecesCopy.put(entry.getKey(), 
+              new GameState.PieceState(ps.getPiece().copy(), ps.getX(), ps.getY()));
     }
     
-    /**
-     * Geser Block ke arah maju (kanan jika horizontal, bawah jika vertikal).
-     * 
-     * @param gameState Keadaan permainan saat ini
-     * @param piece Block yang akan digeser
-     * @return true jika berhasil digeser, false jika tidak
-     */
-    public static boolean moveForward(GameState gameState, Piece piece) {
-        Board board = gameState.getBoard();
-        char[][] grid = board.getGrid();
-        
-        // Cari posisi Block
-        int[] pos = findPiecePosition(board, piece.getLabel());
-        if (pos == null) return false;
-        
-        int pieceX = pos[0];
-        int pieceY = pos[1];
-        boolean[][] shape = piece.getShape();
-        boolean isHorizontal = piece.isHorizontal();
-        
-        if (isHorizontal) {
-            // Cek apakah bisa geser ke kanan
-            int rightmost = pieceX + shape[0].length - 1;
-            if (rightmost + 1 >= board.getGrid()[0].length) {
-                return false; // Tidak bisa keluar batas papan
-            }
-            
-            // Cek apakah kolom sebelah kanan kosong
-            for (int i = 0; i < shape.length; i++) {
-                if (shape[i][shape[i].length-1]) { // Hanya cek bagian paling kanan yang ada isinya
-                    if (grid[pieceY + i][rightmost + 1] != ' ' && 
-                        !(piece instanceof PrimaryPiece && 
-                          rightmost + 1 == board.getOutCoordX() && 
-                          pieceY + i == board.getOutCoordY())) {
-                        return false; // Ada Block lain di sana
-                    }
-                }
-            }
-            
-            // Geser Block ke kanan
-            for (int i = 0; i < shape.length; i++) {
-                for (int j = shape[0].length - 1; j >= 0; j--) {
-                    if (shape[i][j]) {
-                        // Hapus posisi paling kiri yang terisi
-                        if (j == 0) grid[pieceY + i][pieceX] = ' ';
-                        // Pindahkan ke kanan
-                        grid[pieceY + i][pieceX + j + 1] = piece.getLabel();
-                    }
-                }
-            }
-        } else {
-            // Cek apakah bisa geser ke bawah
-            int bottommost = pieceY + shape.length - 1;
-            if (bottommost + 1 >= board.getGrid().length) {
-                return false; // Tidak bisa keluar batas papan
-            }
-            
-            // Cek apakah baris di bawah kosong
-            for (int j = 0; j < shape[0].length; j++) {
-                if (shape[shape.length-1][j]) { // Hanya cek bagian paling bawah yang ada isinya
-                    if (grid[bottommost + 1][pieceX + j] != ' ' &&
-                        !(piece instanceof PrimaryPiece && 
-                          pieceX + j == board.getOutCoordX() && 
-                          bottommost + 1 == board.getOutCoordY())) {
-                        return false; // Ada Block lain di sana
-                    }
-                }
-            }
-            
-            // Geser Block ke bawah
-            for (int j = 0; j < shape[0].length; j++) {
-                for (int i = shape.length - 1; i >= 0; i--) {
-                    if (shape[i][j]) {
-                        // Hapus posisi paling atas yang terisi
-                        if (i == 0) grid[pieceY][pieceX + j] = ' ';
-                        // Pindahkan ke bawah
-                        grid[pieceY + i + 1][pieceX + j] = piece.getLabel();
-                    }
-                }
-            }
-        }
-        
-        return true;
+    // Copy primary piece
+    GameState.PieceState primaryPS = gameState.getPrimaryPieceState();
+    GameState.PieceState primaryPSCopy = new GameState.PieceState(
+            ((PrimaryPiece)primaryPS.getPiece()).copy(), 
+            primaryPS.getX(), primaryPS.getY());
+    
+    return new GameState(boardCopy, piecesCopy, primaryPSCopy);
+  }
+  
+  /**
+   * Menggerakkan Block ke arah tertentu.
+   * 
+   * @param gameState GameState saat ini
+   * @param pieceLabel Label Block yang akan digerakkan
+   * @param direction Arah gerakan (0: kanan, 1: bawah, 2: kiri, 3: atas)
+   * @return GameState baru jika gerakan valid, null jika tidak valid
+   */
+  public static GameState movePiece(GameState gameState, char pieceLabel, int direction) {
+    GameState.PieceState pieceState;
+    boolean isPrimary = false;
+    
+    // Check if it's the primary piece
+    if (gameState.getPrimaryPieceState().getPiece().getLabel() == pieceLabel) {
+      pieceState = gameState.getPrimaryPieceState();
+      isPrimary = true;
+    } else {
+      pieceState = gameState.getPieces().get(pieceLabel);
+      if (pieceState == null) {
+        return null; // Piece not found
+      }
     }
     
-    /**
-     * Geser Block ke arah mundur (kiri jika horizontal, atas jika vertikal).
-     * 
-     * @param gameState Keadaan permainan saat ini
-     * @param piece Block yang akan digeser
-     * @return true jika berhasil digeser, false jika tidak
-     */
-    public static boolean moveBackward(GameState gameState, Piece piece) {
-        Board board = gameState.getBoard();
-        char[][] grid = board.getGrid();
-        
-        // Cari posisi Block
-        int[] pos = findPiecePosition(board, piece.getLabel());
-        if (pos == null) return false;
-        
-        int pieceX = pos[0];
-        int pieceY = pos[1];
-        boolean[][] shape = piece.getShape();
-        boolean isHorizontal = piece.isHorizontal();
-        
-        if (isHorizontal) {
-            // Cek apakah bisa geser ke kiri
-            if (pieceX - 1 < 0) {
-                return false; // Tidak bisa keluar batas papan
-            }
-            
-            // Cek apakah kolom sebelah kiri kosong
-            for (int i = 0; i < shape.length; i++) {
-                if (shape[i][0]) { // Hanya cek bagian paling kiri yang ada isinya
-                    if (grid[pieceY + i][pieceX - 1] != ' ') {
-                        return false; // Ada Block lain di sana
-                    }
-                }
-            }
-            
-            // Geser Block ke kiri
-            for (int i = 0; i < shape.length; i++) {
-                for (int j = 0; j < shape[0].length; j++) {
-                    if (shape[i][j]) {
-                        // Hapus posisi paling kanan yang terisi
-                        if (j == shape[0].length - 1) grid[pieceY + i][pieceX + j] = ' ';
-                        // Pindahkan ke kiri
-                        grid[pieceY + i][pieceX + j - 1] = piece.getLabel();
-                    }
-                }
-            }
-        } else {
-            // Cek apakah bisa geser ke atas
-            if (pieceY - 1 < 0) {
-                return false; // Tidak bisa keluar batas papan
-            }
-            
-            // Cek apakah baris di atas kosong
-            for (int j = 0; j < shape[0].length; j++) {
-                if (shape[0][j]) { // Hanya cek bagian paling atas yang ada isinya
-                    if (grid[pieceY - 1][pieceX + j] != ' ') {
-                        return false; // Ada Block lain di sana
-                    }
-                }
-            }
-            
-            // Geser Block ke atas
-            for (int j = 0; j < shape[0].length; j++) {
-                for (int i = 0; i < shape.length; i++) {
-                    if (shape[i][j]) {
-                        // Hapus posisi paling bawah yang terisi
-                        if (i == shape.length - 1) grid[pieceY + i][pieceX + j] = ' ';
-                        // Pindahkan ke atas
-                        grid[pieceY + i - 1][pieceX + j] = piece.getLabel();
-                    }
-                }
-            }
-        }
-        
-        return true;
+    Piece piece = pieceState.getPiece();
+    int currentX = pieceState.getX();
+    int currentY = pieceState.getY();
+    int newX = currentX;
+    int newY = currentY;
+    
+    // Calculate new position based on direction
+    switch (direction) {
+      case 0 -> { // Right
+        if (!piece.isHorizontal()) return null; // Can only move horizontally
+        newX = currentX + 1;
+      }
+      case 1 -> { // Down
+        if (piece.isHorizontal()) return null; // Can only move vertically
+        newY = currentY + 1;
+      }
+      case 2 -> { // Left
+        if (!piece.isHorizontal()) return null; // Can only move horizontally
+        newX = currentX - 1;
+      }
+      case 3 -> { // Up
+        if (piece.isHorizontal()) return null; // Can only move vertically
+        newY = currentY - 1;
+      }
+      default -> { return null; } // Invalid direction
     }
     
-    /**
-     * Cari posisi Block di papan berdasarkan labelnya.
-     * 
-     * @param board Papan permainan
-     * @param label Label Block yang dicari
-     * @return Array berisi koordinat [x, y] dari ujung kiri atas Block, null jika tidak ditemukan
-     */
-    public static int[] findPiecePosition(Board board, char label) {
-        char[][] grid = board.getGrid();
-        
-        for (int i = 0; i < grid.length; i++) {
-            for (int j = 0; j < grid[i].length; j++) {
-                if (grid[i][j] == label) {
-                    return new int[]{j, i}; // [x, y]
-                }
-            }
-        }
-        
-        return null; // Block tidak ditemukan
+    // Check bounds
+    Board board = gameState.getBoard();
+    int boardWidth = board.getGrid()[0].length;
+    int boardHeight = board.getGrid().length;
+    
+    // Check if new position is valid (within bounds and no collision)
+    if (newX < 0 || newY < 0) {
+      return null; // Out of bounds (top/left)
     }
+    
+    // Check if piece would go out of bounds (right/bottom)
+    if (piece.isHorizontal()) {
+      if (newX + piece.getSize() > boardWidth) {
+        return null; // Horizontal piece would exceed right boundary
+      }
+    } else {
+      if (newY + piece.getSize() > boardHeight) {
+        return null; // Vertical piece would exceed bottom boundary
+      }
+    }
+    
+    // Check for collisions with other pieces
+    // Special case for primary piece reaching exit
+    boolean allowExit = isPrimary && 
+      ((piece.isHorizontal() && 
+        newX + piece.getSize() - 1 == board.getOutCoordX() && 
+        newY == board.getOutCoordY()) ||
+        (!piece.isHorizontal() && 
+        newX == board.getOutCoordX() && 
+        newY + piece.getSize() - 1 == board.getOutCoordY()));
+    
+    if (!allowExit && wouldCollide(gameState, pieceLabel, newX, newY)) {
+      return null; // Would collide with another piece
+    }
+    
+    // Create a new game state with the updated position
+    return createNewStateWithMovedPiece(gameState, pieceLabel, newX, newY);
+  }
+  
+  /**
+   * Geser Block ke kanan (hanya untuk Block horizontal).
+   * 
+   * @param gameState Keadaan permainan saat ini
+   * @param pieceLabel Label Block yang akan digeser
+   * @return GameState baru jika berhasil digeser, null jika tidak
+   */
+  public static GameState moveRight(GameState gameState, char pieceLabel) {
+    return movePiece(gameState, pieceLabel, 0);
+  }
+  
+  /**
+   * Geser Block ke bawah (hanya untuk Block vertikal).
+   * 
+   * @param gameState Keadaan permainan saat ini
+   * @param pieceLabel Label Block yang akan digeser
+   * @return GameState baru jika berhasil digeser, null jika tidak
+   */
+  public static GameState moveDown(GameState gameState, char pieceLabel) {
+    return movePiece(gameState, pieceLabel, 1);
+  }
+  
+  /**
+   * Geser Block ke kiri (hanya untuk Block horizontal).
+   * 
+   * @param gameState Keadaan permainan saat ini
+   * @param pieceLabel Label Block yang akan digeser
+   * @return GameState baru jika berhasil digeser, null jika tidak
+   */
+  public static GameState moveLeft(GameState gameState, char pieceLabel) {
+    return movePiece(gameState, pieceLabel, 2);
+  }
+  
+  /**
+   * Geser Block ke atas (hanya untuk Block vertikal).
+   * 
+   * @param gameState Keadaan permainan saat ini
+   * @param pieceLabel Label Block yang akan digeser
+   * @return GameState baru jika berhasil digeser, null jika tidak
+   */
+  public static GameState moveUp(GameState gameState, char pieceLabel) {
+    return movePiece(gameState, pieceLabel, 3);
+  }
+  
+  /**
+   * Check for collisions between a piece at a new position and other pieces.
+   * 
+   * @param gameState Current game state
+   * @param pieceLabel Label of the piece to check
+   * @param newX New X coordinate
+   * @param newY New Y coordinate
+   * @return true if collision would occur, false otherwise
+   */
+  private static boolean wouldCollide(GameState gameState, char pieceLabel, int newX, int newY) {
+    // Use the existing collision detection from GameState
+    return gameState.wouldCollide(pieceLabel, newX, newY);
+  }
+  
+  /**
+   * Create a new GameState with an updated piece position.
+   * 
+   * @param gameState Current game state
+   * @param pieceLabel Label of the piece to move
+   * @param newX New X coordinate
+   * @param newY New Y coordinate
+   * @return New GameState with the piece moved
+   */
+  private static GameState createNewStateWithMovedPiece(GameState gameState, char pieceLabel, int newX, int newY) {
+    // Create copies of all components to avoid modifying the original state
+    Board boardCopy = gameState.getBoard(); // Board is immutable
+    
+    // Copy all pieces
+    Map<Character, GameState.PieceState> piecesCopy = new HashMap<>();
+    for (Map.Entry<Character, GameState.PieceState> entry : gameState.getPieces().entrySet()) {
+      GameState.PieceState ps = entry.getValue();
+      if (ps.getPiece().getLabel() == pieceLabel) {
+        // Update this piece's position
+        piecesCopy.put(entry.getKey(), 
+                new GameState.PieceState(ps.getPiece().copy(), newX, newY));
+      } else {
+        // Copy unchanged
+        piecesCopy.put(entry.getKey(), 
+                new GameState.PieceState(ps.getPiece().copy(), ps.getX(), ps.getY()));
+      }
+    }
+    
+    // Handle primary piece separately
+    GameState.PieceState primaryPS = gameState.getPrimaryPieceState();
+    GameState.PieceState primaryPSCopy;
+    
+    if (primaryPS.getPiece().getLabel() == pieceLabel) {
+      // Update primary piece position
+      primaryPSCopy = new GameState.PieceState(
+              ((PrimaryPiece)primaryPS.getPiece()).copy(), newX, newY);
+    } else {
+      // Copy unchanged
+      primaryPSCopy = new GameState.PieceState(
+              ((PrimaryPiece)primaryPS.getPiece()).copy(), 
+              primaryPS.getX(), primaryPS.getY());
+    }
+    
+    return new GameState(boardCopy, piecesCopy, primaryPSCopy);
+  }
+  
+  /**
+   * Update the board grid to reflect the current pieces' positions.
+   * This is useful for visualization or when converting between representation models.
+   * 
+   * @param gameState The game state to use for updating the grid
+   */
+  public static void updateBoardGrid(GameState gameState) {
+    Board board = gameState.getBoard();
+    char[][] grid = board.getGrid();
+    
+    // Clear the grid
+    for (char[] row : grid) {
+      for (int j = 0; j < row.length; j++) {
+        row[j] = ' ';
+      }
+    }
+    
+    // Place primary piece
+    placePieceOnGrid(grid, gameState.getPrimaryPieceState());
+    
+    // Place all other pieces
+    for (GameState.PieceState ps : gameState.getPieces().values()) {
+      placePieceOnGrid(grid, ps);
+    }
+  }
+  
+  /**
+   * Helper method to place a piece on the grid.
+   * 
+   * @param grid The grid to update
+   * @param pieceState The piece state to place
+   */
+  private static void placePieceOnGrid(char[][] grid, GameState.PieceState pieceState) {
+    Piece piece = pieceState.getPiece();
+    int x = pieceState.getX();
+    int y = pieceState.getY();
+    
+    for (int i = 0; i < piece.getSize(); i++) {
+      if (piece.isHorizontal()) {
+        if (x + i < grid[0].length && y < grid.length) {
+          grid[y][x + i] = piece.getLabel();
+        }
+      } else {
+        if (x < grid[0].length && y + i < grid.length) {
+          grid[y + i][x] = piece.getLabel();
+        }
+      }
+    }
+  }
 }

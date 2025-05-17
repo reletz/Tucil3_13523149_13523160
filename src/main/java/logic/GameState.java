@@ -1,6 +1,9 @@
 package logic;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * Kelas GameState ini buat nampung keadaan permainan.
@@ -8,24 +11,140 @@ import java.util.List;
  */
 public class GameState {
     private final Board board;
-    private final List<Piece> pieces;
-    private final PrimaryPiece primaryPiece;
-    
+    private final Map<Character, PieceState> pieces;
+    private final PieceState primaryPieceState;
+
     /**
-     * Bikin GameState baru dengan papan dan Block yang dikasih.
-     * 
-     * @param board Papan permainan
-     * @param pieces Daftar Block biasa
-     * @param primaryPiece Block utama
+     * Class representing a piece's state including its position
      */
-    public GameState(Board board, List<Piece> pieces, PrimaryPiece primaryPiece) {
-        this.board = board;
-        this.pieces = pieces;
-        this.primaryPiece = primaryPiece;
+    public static class PieceState {
+        private final Piece piece;
+        private final int x;
+        private final int y;
+
+        /**
+         * Konstruktor untuk PieceState.
+         * 
+         * @param piece Block yang direpresentasikan
+         * @param x Koordinat X dari ujung kiri atas Block
+         * @param y Koordinat Y dari ujung kiri atas Block
+         */
+        public PieceState(Piece piece, int x, int y) {
+            this.piece = piece;
+            this.x = x;
+            this.y = y;
+        }
+
+        /**
+         * Mengambil Block yang direpresentasikan.
+         * 
+         * @return Block
+         */
+        public Piece getPiece() {
+            return piece;
+        }
+
+        /**
+         * Mengambil koordinat X dari ujung kiri atas Block.
+         * 
+         * @return Koordinat X
+         */
+        public int getX() {
+            return x;
+        }
+
+        /**
+         * Mengambil koordinat Y dari ujung kiri atas Block.
+         * 
+         * @return Koordinat Y
+         */
+        public int getY() {
+            return y;
+        }
+
+        /**
+         * Memeriksa apakah Block ini menempati sel tertentu.
+         * 
+         * @param checkX Koordinat X yang diperiksa
+         * @param checkY Koordinat Y yang diperiksa
+         * @return true jika Block menempati sel tersebut, false jika tidak
+         */
+        public boolean occupies(int checkX, int checkY) {
+            if (piece.isHorizontal()) {
+                return checkY == y && checkX >= x && checkX < x + piece.getSize();
+            } else {
+                return checkX == x && checkY >= y && checkY < y + piece.getSize();
+            }
+        }
+
+        /**
+         * Membandingkan PieceState ini dengan objek lain.
+         * 
+         * @param o Objek yang dibandingkan
+         * @return true jika sama, false jika tidak
+         */
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            PieceState that = (PieceState) o;
+            return x == that.x && 
+                   y == that.y && 
+                   Objects.equals(piece, that.piece);
+        }
+
+        /**
+         * Menghasilkan hash code untuk PieceState ini.
+         * 
+         * @return Hash code
+         */
+        @Override
+        public int hashCode() {
+            return Objects.hash(piece, x, y);
+        }
     }
     
     /**
-     * Ngambil papan permainan.
+     * Bikin GameState baru dengan papan, daftar Block, dan Block utama
+     * 
+     * @param board Papan permainan
+     * @param pieces Map dari label Block ke PieceState-nya
+     * @param primaryPieceState PieceState dari Block utama
+     */
+    public GameState(Board board, Map<Character, PieceState> pieces, PieceState primaryPieceState) {
+        this.board = board;
+        this.pieces = pieces;
+        this.primaryPieceState = primaryPieceState;
+    }
+
+    /**
+     * Convenience constructor yang menerima List<Piece> dan mengubahnya jadi Map
+     * 
+     * @param board Papan permainan
+     * @param pieces Daftar Block biasa
+     * @param positionsX Daftar koordinat X untuk setiap Block
+     * @param positionsY Daftar koordinat Y untuk setiap Block
+     * @param primaryPiece Block utama
+     * @param primaryX Koordinat X Block utama
+     * @param primaryY Koordinat Y Block utama
+     */
+    public GameState(Board board, List<Piece> pieces, List<Integer> positionsX, 
+                    List<Integer> positionsY, PrimaryPiece primaryPiece, 
+                    int primaryX, int primaryY) {
+        this.board = board;
+        
+        // Convert lists to map with positions
+        this.pieces = new HashMap<>();
+        for (int i = 0; i < pieces.size(); i++) {
+            Piece piece = pieces.get(i);
+            this.pieces.put(piece.getLabel(), new PieceState(piece, positionsX.get(i), positionsY.get(i)));
+        }
+        
+        this.primaryPieceState = new PieceState(primaryPiece, primaryX, primaryY);
+    }
+    
+    /**
+     * Mengambil papan permainan.
      * 
      * @return Papan permainan
      */
@@ -34,20 +153,130 @@ public class GameState {
     }
     
     /**
-     * Ngambil daftar Block biasa.
+     * Mengambil Map dari label Block ke PieceState-nya.
      * 
-     * @return Daftar Block biasa
+     * @return Map dari label Block ke PieceState-nya
      */
-    public List<Piece> getPieces() {
+    public Map<Character, PieceState> getPieces() {
         return pieces;
     }
     
     /**
-     * Ngambil Block utama.
+     * Mengambil PieceState berdasarkan label Block.
      * 
-     * @return Block utama
+     * @param label Label Block yang dicari
+     * @return PieceState dari Block tersebut, null jika tidak ditemukan
      */
-    public PrimaryPiece getPrimaryPiece() {
-        return primaryPiece;
+    public PieceState getPieceState(char label) {
+        return pieces.get(label);
+    }
+    
+    /**
+     * Mengambil PieceState dari Block utama.
+     * 
+     * @return PieceState dari Block utama
+     */
+    public PieceState getPrimaryPieceState() {
+        return primaryPieceState;
+    }
+    
+    /**
+     * Cek apakah ada Block yang menempati sel tertentu
+     * 
+     * @param x Koordinat X yang diperiksa
+     * @param y Koordinat Y yang diperiksa
+     * @return true jika ada Block yang menempati sel tersebut, false jika tidak
+     */
+    public boolean isCellOccupied(int x, int y) {
+        // Check if primary piece occupies this cell
+        if (primaryPieceState.occupies(x, y)) {
+            return true;
+        }
+        
+        // Check if any other piece occupies this cell
+        for (PieceState pieceState : pieces.values()) {
+            if (pieceState.occupies(x, y)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Method for detecting collisions when attempting to move a piece
+     * 
+     * @param pieceLabel Label Block yang akan dipindahkan
+     * @param newX Koordinat X baru
+     * @param newY Koordinat Y baru
+     * @return true jika akan terjadi tabrakan, false jika tidak
+     */
+    public boolean wouldCollide(char pieceLabel, int newX, int newY) {
+        PieceState pieceToMove = pieces.get(pieceLabel);
+        Piece piece = pieceToMove.getPiece();
+        
+        // Check each cell the piece would occupy in the new position
+        for (int i = 0; i < piece.getSize(); i++) {
+            int checkX = piece.isHorizontal() ? newX + i : newX;
+            int checkY = piece.isHorizontal() ? newY : newY + i;
+            
+            // Skip cells that the piece already occupies in its current position
+            if (pieceToMove.occupies(checkX, checkY)) {
+                continue;
+            }
+            
+            // Check if any other piece occupies this cell
+            if (isCellOccupied(checkX, checkY)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Memeriksa apakah Block utama sudah mencapai pintu keluar.
+     * 
+     * @return true jika Block utama sudah mencapai pintu keluar, false jika belum
+     */
+    public boolean isPrimarPieceAtExit() {
+        int exitX = board.getOutCoordX();
+        int exitY = board.getOutCoordY();
+        
+        // For horizontal primary piece (standard Rush Hour), check if right edge is at exit
+        if (primaryPieceState.getPiece().isHorizontal()) {
+            int rightEdgeX = primaryPieceState.getX() + primaryPieceState.getPiece().getSize() - 1;
+            return rightEdgeX == exitX && primaryPieceState.getY() == exitY;
+        } 
+        // For vertical primary piece, check if bottom edge is at exit
+        else {
+            int bottomEdgeY = primaryPieceState.getY() + primaryPieceState.getPiece().getSize() - 1;
+            return primaryPieceState.getX() == exitX && bottomEdgeY == exitY;
+        }
+    }
+
+    /**
+     * Membandingkan GameState ini dengan objek lain.
+     * 
+     * @param o Objek yang dibandingkan
+     * @return true jika sama, false jika tidak
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        GameState that = (GameState) o;
+        return Objects.equals(primaryPieceState, that.primaryPieceState) && 
+               Objects.equals(pieces, that.pieces);
+    }
+
+    /**
+     * Menghasilkan hash code untuk GameState ini.
+     * 
+     * @return Hash code
+     */
+    @Override
+    public int hashCode() {
+        return Objects.hash(primaryPieceState, pieces);
     }
 }

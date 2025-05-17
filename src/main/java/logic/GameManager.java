@@ -1,10 +1,10 @@
-package util;
-
-import logic.GameState;
+package logic;
 
 import java.io.File;
 import java.net.URL;
 import java.util.Scanner;
+
+import util.ConfigParser;
 
 /**
  * Kelas GameManager buat mengatur operasi dasar permainan.
@@ -52,7 +52,7 @@ public class GameManager {
         System.out.println("3. A* Search");
         System.out.print("Pilihan: ");
         
-        int choice = 0;
+        int choice;
         try {
             choice = Integer.parseInt(scanner.nextLine().trim());
             if (choice < 1 || choice > 3) {
