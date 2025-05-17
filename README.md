@@ -23,7 +23,7 @@
 ### Mode GUI
 
 1. Build JAR package (untuk sekarang JAR dipake khusus GUI dulu):
-`mvn clean package`
+`mvn clean package -P gui`
 
 2. Pindahkan file JAR ke Windows (kalo dari WSL):
 `cp bin/rush-hour-solver-1.0-SNAPSHOT.jar /mnt/c/Users/YourUsername/Desktop/`
