@@ -80,4 +80,15 @@ public class Board {
   public char[][] getGrid(){
     return grid;
   }
+
+  /**
+   * Set grid papan permainan.
+   * 
+   * @param Array 2D yang isinya karakter di papan
+   */
+  public void setGrid(char[][] newGrid) {
+    for (int i = 0; i < grid.length; i++) {
+      System.arraycopy(newGrid[i], 0, grid[i], 0, grid[i].length);
+    }
+  }
 }

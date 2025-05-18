@@ -111,7 +111,7 @@ public class Node implements Comparable<Node> {
    * @return true if this is a goal state, false otherwise
    */
   public boolean isGoalState() {
-    return state.isPrimarPieceAtExit();
+    return state.isPrimaryPieceAtExit();
   }
 
   /**

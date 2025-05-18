@@ -1,11 +1,5 @@
 package util;
 
-import logic.Board;
-import logic.GameState;
-import logic.GameLogic;
-import logic.Piece;
-import logic.PrimaryPiece;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -14,140 +8,202 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import logic.Board;
+import logic.GameState;
+import logic.Piece;
+import logic.PrimaryPiece;
+
 /**
  * Kelas ConfigParser buat baca file konfigurasi.
  * Instantiate Board dan Pieces dari file txt.
  */
 public class ConfigParser {
-    /**
-     * Baca file konfigurasi permainan dan instantiate Board serta Pieces.
-     * 
-     * @param filePath Lokasi file konfigurasi
-     * @return Objek GameState yang berisi Board dan Piece
-     * @throws IOException Kalo ada error pas baca file
-     */
-    public static GameState parseConfig(String filePath) throws IOException {
-        BufferedReader reader = new BufferedReader(new FileReader(filePath));
-        
-        // Baca dimensi papan
-        String[] dimensions = reader.readLine().trim().split("\\s+");
-        int rows = Integer.parseInt(dimensions[0]);
-        int cols = Integer.parseInt(dimensions[1]);
-        
-        // Baca jumlah Block biasa
-        int nonPrimaryPieceCount = Integer.parseInt(reader.readLine().trim());
-        
-        // Baca konfigurasi papan
-        // Save dulu setiap line papan ke List of boardLines
-        List<String> boardLines = new ArrayList<>();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            if (!line.trim().isEmpty()) {
-                boardLines.add(line);
-            }
+  /**
+   * Baca file konfigurasi permainan dan instantiate Board serta Pieces.
+   * 
+   * @param filePath Lokasi file konfigurasi
+   * @return Objek GameState yang berisi Board dan Piece
+   * @throws IOException Kalo ada error pas baca file
+   */
+  public static GameState parseConfig(String filePath) throws IOException {
+    BufferedReader reader = new BufferedReader(new FileReader(filePath));
+    
+    try {
+      // Print file content for debugging
+      System.out.println("File content:");
+      List<String> allLines = new ArrayList<>();
+      String line;
+      while ((line = reader.readLine()) != null) {
+        allLines.add(line);
+        System.out.println("[" + line + "]");
+      }
+      reader.close();
+      
+      if (allLines.size() < 3) {
+        throw new IOException("File konfigurasi tidak lengkap");
+      }
+      
+      // Baca dimensi papan
+      String[] dimensions = allLines.get(0).trim().split("\\s+");
+      int rows = Integer.parseInt(dimensions[0]);
+      int cols = Integer.parseInt(dimensions[1]);
+      
+      // Print dimensions for debugging
+      System.out.println("Board dimensions: " + rows + "x" + cols);
+      
+      // Baca jumlah Block biasa
+      int nonPrimaryPieceCount = Integer.parseInt(allLines.get(1).trim());
+      
+      // Pastikan ada cukup baris untuk papan
+      // Check if we have enough lines for the board (2 header lines + rows)
+      if (allLines.size() - 2 < rows) {
+        throw new IOException("Konfigurasi papan tidak lengkap, expected " + rows + 
+                              " rows but found " + (allLines.size() - 2));
+      }
+      
+      // Baca konfigurasi papan
+      char[][] grid = new char[rows][cols];
+      
+      // Initialize grid with empty spaces
+      for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+          grid[i][j] = '.';
         }
-        reader.close();
+      }
+      
+      // Fill grid from file content
+      for (int i = 0; i < rows; i++) {
+        line = allLines.get(i + 2); // Skip first two lines (dimensions and piece count)
+        System.out.println("Processing line " + (i + 3) + ": [" + line + "]");
         
+        for (int j = 0; j < Math.min(line.length(), cols); j++) {
+          grid[i][j] = line.charAt(j);
+        }
+      }
+      
+      // Print grid for verification
+      System.out.println("\nParsed grid:");
+      for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+          System.out.print(grid[i][j]);
+        }
+        System.out.println();
+      }
+      
         // Cari koordinat pintu keluar
-        int kX = -1, kY = -1;
-        for (int i = 0; i < boardLines.size(); i++) {
-            String rowString = boardLines.get(i);
-            int kIndex = rowString.indexOf('K');
-            if (kIndex != -1) {
-                kX = kIndex;
-                kY = i;
-                break;
-            }
-        }
-        
-        // Buat papan permainan
-        Board board = new Board(rows, cols, kX, kY);
-        
-        // Identifikasi dan buat semua Block
-        Map<Character, List<int[]>> pieceCoordinates = new HashMap<>();
-        
-        // Kumpulkan koordinat untuk setiap label Block
-        for (int i = 0; i < boardLines.size(); i++) {
-            String rowString = boardLines.get(i);
-            for (int j = 0; j < rowString.length(); j++) {
-                char cell = rowString.charAt(j);
-                if (cell != '.' && cell != 'K') {
-                    pieceCoordinates.computeIfAbsent(cell, k -> new ArrayList<>())
-                                    .add(new int[]{j, i});
-                }
-            }
-        }
-        
-        // Buat Block dari koordinat yang dikumpulkan
-        List<Piece> pieces = new ArrayList<>();
-        PrimaryPiece primaryPiece = null;
+        int exitX = -1;
+        int exitY = -1;
 
-        for (Map.Entry<Character, List<int[]>> entry : pieceCoordinates.entrySet()) {
-            char label = entry.getKey();
-            List<int[]> coords = entry.getValue();
+        // Scan original input lines for K
+        for (int i = 0; i < rows; i++) {
+        String inputLine = allLines.get(i + 2); // Skip first two header lines
+        int kIndex = inputLine.indexOf('K');
+        if (kIndex != -1) {
+            // Found K in this line
+            exitX = kIndex;
+            exitY = i;
             
-            // Tentukan bentuk dan orientasi Block
-            boolean[][] shape = determineShape(coords);
-            
-            // Cari posisi top-left
-            int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE;
-            for (int[] coord : coords) {
-                minX = Math.min(minX, coord[0]);
-                minY = Math.min(minY, coord[1]);
-            }
-            
-            // Buat Block
-            if (label == 'P') {
-                primaryPiece = new PrimaryPiece(label, shape, true);
-                GameLogic.placePiece(board, primaryPiece, minX, minY);
+            // Check if K is outside the grid (as it should be)
+            if (kIndex >= cols) {
+            System.out.println("Exit ('K') found outside grid at position (" + exitX + "," + exitY + ")");
             } else {
-                Piece piece = new Piece(label, shape);
-                pieces.add(piece);
-                GameLogic.placePiece(board, piece, minX, minY);
+            System.out.println("Warning: Exit ('K') found inside grid at position (" + exitX + "," + exitY + ")");
+            // Still use it, for compatibility with input files that place K inside the grid
             }
+            break;
+        }
         }
         
-        return new GameState(board, pieces, primaryPiece);
-    }
-    
-    /**
-     * Tentukan bentuk Block berdasarkan koordinatnya
-     */
-    private static boolean[][] determineShape(List<int[]> coords) {
-        // Cari dimensi Block
+      // Buat papan permainan
+      Board board = new Board(rows, cols, exitX, exitY);
+      board.setGrid(grid); // Set grid to the board
+      
+      // Identifikasi dan buat semua Block
+      Map<Character, List<int[]>> pieceCoordinates = new HashMap<>();
+      
+      // Kumpulkan koordinat untuk setiap label Block
+      for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+          char cell = grid[i][j];
+          if (cell != '.' && cell != 'K') {
+            pieceCoordinates.computeIfAbsent(cell, k -> new ArrayList<>())
+                        .add(new int[]{j, i});
+          }
+        }
+      }
+      
+      // Debug output
+      System.out.println("\nDetected pieces:");
+      for (Map.Entry<Character, List<int[]>> entry : pieceCoordinates.entrySet()) {
+        System.out.println("Piece " + entry.getKey() + ": " + entry.getValue().size() + " cells");
+      }
+      
+      // Prepare for creating GameState with new structure
+      List<Piece> pieces = new ArrayList<>();
+      List<Integer> positionsX = new ArrayList<>();
+      List<Integer> positionsY = new ArrayList<>();
+      PrimaryPiece primaryPiece = null;
+      int primaryX = -1;
+      int primaryY = -1;
+  
+      // Process each piece
+      for (Map.Entry<Character, List<int[]>> entry : pieceCoordinates.entrySet()) {
+        char label = entry.getKey();
+        List<int[]> coords = entry.getValue();
+        
+        // Determine orientation and size
+        boolean isHorizontal;
+        int size = coords.size(); // Size is the number of cells
         int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE;
-        int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE;
         
+        // Find top-left corner
         for (int[] coord : coords) {
-            minX = Math.min(minX, coord[0]);
-            minY = Math.min(minY, coord[1]);
-            maxX = Math.max(maxX, coord[0]);
-            maxY = Math.max(maxY, coord[1]);
+          minX = Math.min(minX, coord[0]);
+          minY = Math.min(minY, coord[1]);
         }
         
-        int width = maxX - minX + 1;
-        int height = maxY - minY + 1;
+        // Check if horizontal (all Y values are the same)
+        boolean sameY = true;
+        int baseY = coords.get(0)[1];
         
-        // Buat matriks bentuk
-        boolean[][] shape = new boolean[height][width];
-        
-        // Tandai sel yang terisi
         for (int[] coord : coords) {
-            int relX = coord[0] - minX;
-            int relY = coord[1] - minY;
-            shape[relY][relX] = true;
+          if (coord[1] != baseY) {
+            sameY = false;
+            break;
+          }
         }
         
-        return shape;
+        isHorizontal = sameY;
+        
+        // Debug output for each piece
+        System.out.println("Processing piece " + label + ": size=" + size + 
+                          ", isHorizontal=" + isHorizontal + 
+                          ", position=(" + minX + "," + minY + ")");
+        
+        // Create piece
+        if (label == 'P') {
+          primaryPiece = new PrimaryPiece(label, size, isHorizontal);
+          primaryX = minX;
+          primaryY = minY;
+        } else {
+          Piece piece = new Piece(label, size, isHorizontal);
+          pieces.add(piece);
+          positionsX.add(minX);
+          positionsY.add(minY);
+        }
+      }
+      
+      // Check if primary piece was found
+      if (primaryPiece == null) {
+        throw new IOException("Primary piece (P) not found in the configuration");
+      }
+      
+      // Create and return the GameState with the new structure
+      return new GameState(board, pieces, positionsX, positionsY, primaryPiece, primaryX, primaryY);
+    } catch (Exception e) {
+      System.out.println("Exception details: " + e);
+      e.printStackTrace();
+      throw new IOException("Error parsing configuration: " + e.getMessage(), e);
     }
-    
-    /**
-     * Taruh Block di papan pada koordinat yang ditentukan
-     */
-    private static void placePieceOnBoard(Board board, Piece piece, List<int[]> coords) {
-        char[][] grid = board.getGrid();
-        for (int[] coord : coords) {
-            grid[coord[1]][coord[0]] = piece.getLabel();
-        }
-    }
+  }
 }

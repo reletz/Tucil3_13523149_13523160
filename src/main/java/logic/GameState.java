@@ -236,22 +236,37 @@ public class GameState {
     
     /**
      * Memeriksa apakah Block utama sudah mencapai pintu keluar.
+     * Critically important to determine when the puzzle is solved!
      * 
      * @return true jika Block utama sudah mencapai pintu keluar, false jika belum
      */
-    public boolean isPrimarPieceAtExit() {
+    public boolean isPrimaryPieceAtExit() {
         int exitX = board.getOutCoordX();
         int exitY = board.getOutCoordY();
         
-        // For horizontal primary piece (standard Rush Hour), check if right edge is at exit
-        if (primaryPieceState.getPiece().isHorizontal()) {
-            int rightEdgeX = primaryPieceState.getX() + primaryPieceState.getPiece().getSize() - 1;
-            return rightEdgeX == exitX && primaryPieceState.getY() == exitY;
+        // Use Piece instead of PrimaryPiece to avoid ClassCastException
+        Piece primaryPiece = primaryPieceState.getPiece();
+        int primaryX = primaryPieceState.getX();
+        int primaryY = primaryPieceState.getY();
+        
+        // Debug output when checking goal state
+        System.out.println("Checking goal: Primary at (" + primaryX + "," + primaryY + 
+                        "), size=" + primaryPiece.getSize() + 
+                        ", Exit at (" + exitX + "," + exitY + ")");
+                        
+        // For horizontal primary piece (standard Rush Hour)
+        if (primaryPiece.isHorizontal()) {
+            int rightEdgeX = primaryX + primaryPiece.getSize() - 1;
+            boolean isGoal = (rightEdgeX == exitX - 1) && (primaryY == exitY);
+            System.out.println("Horizontal check: right edge at " + rightEdgeX + ", goal=" + isGoal);
+            return isGoal;
         } 
-        // For vertical primary piece, check if bottom edge is at exit
+        // For vertical primary piece
         else {
-            int bottomEdgeY = primaryPieceState.getY() + primaryPieceState.getPiece().getSize() - 1;
-            return primaryPieceState.getX() == exitX && bottomEdgeY == exitY;
+            int bottomEdgeY = primaryY + primaryPiece.getSize() - 1;
+            boolean isGoal = (primaryX == exitX) && (bottomEdgeY == exitY - 1);
+            System.out.println("Vertical check: bottom edge at " + bottomEdgeY + ", goal=" + isGoal);
+            return isGoal;
         }
     }
 

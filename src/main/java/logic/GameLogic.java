@@ -108,16 +108,27 @@ public class GameLogic {
     
     // Check for collisions with other pieces
     // Special case for primary piece reaching exit
+    // Inside the movePiece method, update this section:
+
+    // Check if piece would go out of bounds (right/bottom)
+    // Special case for primary piece reaching exit
     boolean allowExit = isPrimary && 
-      ((piece.isHorizontal() && 
-        newX + piece.getSize() - 1 == board.getOutCoordX() && 
-        newY == board.getOutCoordY()) ||
-        (!piece.isHorizontal() && 
-        newX == board.getOutCoordX() && 
-        newY + piece.getSize() - 1 == board.getOutCoordY()));
-    
-    if (!allowExit && wouldCollide(gameState, pieceLabel, newX, newY)) {
-      return null; // Would collide with another piece
+        ((piece.isHorizontal() && 
+          newX + piece.getSize() == board.getOutCoordX() && 
+          newY == board.getOutCoordY()) ||
+          (!piece.isHorizontal() && 
+          newX == board.getOutCoordX() && 
+          newY + piece.getSize() == board.getOutCoordY()));
+
+    if (piece.isHorizontal()) {
+        // Allow primary piece to exit the board
+        if (newX + piece.getSize() > boardWidth && !allowExit) {
+            return null; // Horizontal piece would exceed right boundary
+        }
+    } else {
+        if (newY + piece.getSize() > boardHeight && !allowExit) {
+            return null; // Vertical piece would exceed bottom boundary
+        }
     }
     
     // Create a new game state with the updated position
@@ -182,51 +193,68 @@ public class GameLogic {
     return gameState.wouldCollide(pieceLabel, newX, newY);
   }
   
-  /**
-   * Create a new GameState with an updated piece position.
-   * 
-   * @param gameState Current game state
-   * @param pieceLabel Label of the piece to move
-   * @param newX New X coordinate
-   * @param newY New Y coordinate
-   * @return New GameState with the piece moved
-   */
-  private static GameState createNewStateWithMovedPiece(GameState gameState, char pieceLabel, int newX, int newY) {
-    // Create copies of all components to avoid modifying the original state
-    Board boardCopy = gameState.getBoard(); // Board is immutable
-    
-    // Copy all pieces
-    Map<Character, GameState.PieceState> piecesCopy = new HashMap<>();
-    for (Map.Entry<Character, GameState.PieceState> entry : gameState.getPieces().entrySet()) {
-      GameState.PieceState ps = entry.getValue();
-      if (ps.getPiece().getLabel() == pieceLabel) {
-        // Update this piece's position
-        piecesCopy.put(entry.getKey(), 
-                new GameState.PieceState(ps.getPiece().copy(), newX, newY));
-      } else {
-        // Copy unchanged
-        piecesCopy.put(entry.getKey(), 
-                new GameState.PieceState(ps.getPiece().copy(), ps.getX(), ps.getY()));
-      }
-    }
-    
-    // Handle primary piece separately
-    GameState.PieceState primaryPS = gameState.getPrimaryPieceState();
-    GameState.PieceState primaryPSCopy;
-    
-    if (primaryPS.getPiece().getLabel() == pieceLabel) {
-      // Update primary piece position
-      primaryPSCopy = new GameState.PieceState(
-              ((PrimaryPiece)primaryPS.getPiece()).copy(), newX, newY);
+/**
+ * Create a new GameState with an updated piece position.
+ * 
+ * @param gameState Current game state
+ * @param pieceLabel Label of the piece to move
+ * @param newX New X coordinate
+ * @param newY New Y coordinate
+ * @return New GameState with the piece moved
+ */
+private static GameState createNewStateWithMovedPiece(GameState gameState, char pieceLabel, int newX, int newY) {
+  // Create copies of all components to avoid modifying the original state
+  Board boardCopy = gameState.getBoard(); // Board is immutable
+  
+  // Copy all pieces
+  Map<Character, GameState.PieceState> piecesCopy = new HashMap<>();
+  for (Map.Entry<Character, GameState.PieceState> entry : gameState.getPieces().entrySet()) {
+    GameState.PieceState ps = entry.getValue();
+    if (ps.getPiece().getLabel() == pieceLabel) {
+      // Update this piece's position
+      piecesCopy.put(entry.getKey(), 
+              new GameState.PieceState(ps.getPiece().copy(), newX, newY));
     } else {
       // Copy unchanged
+      piecesCopy.put(entry.getKey(), 
+              new GameState.PieceState(ps.getPiece().copy(), ps.getX(), ps.getY()));
+    }
+  }
+  
+  // Handle primary piece separately
+  GameState.PieceState primaryPS = gameState.getPrimaryPieceState();
+  GameState.PieceState primaryPSCopy;
+  
+  if (primaryPS.getPiece().getLabel() == pieceLabel) {
+    // Update primary piece position - correctly handle the PrimaryPiece casting
+    Piece originalPiece = primaryPS.getPiece();
+    // Check if it's actually a PrimaryPiece before casting
+    if (originalPiece instanceof PrimaryPiece) {
       primaryPSCopy = new GameState.PieceState(
-              ((PrimaryPiece)primaryPS.getPiece()).copy(), 
+              ((PrimaryPiece)originalPiece).copy(), newX, newY);
+    } else {
+      // Fallback if it's not a PrimaryPiece for some reason
+      primaryPSCopy = new GameState.PieceState(
+              originalPiece.copy(), newX, newY);
+    }
+  } else {
+    // Copy unchanged - correctly handle the PrimaryPiece casting
+    Piece originalPiece = primaryPS.getPiece();
+    // Check if it's actually a PrimaryPiece before casting
+    if (originalPiece instanceof PrimaryPiece) {
+      primaryPSCopy = new GameState.PieceState(
+              ((PrimaryPiece)originalPiece).copy(), 
+              primaryPS.getX(), primaryPS.getY());
+    } else {
+      // Fallback if it's not a PrimaryPiece for some reason
+      primaryPSCopy = new GameState.PieceState(
+              originalPiece.copy(), 
               primaryPS.getX(), primaryPS.getY());
     }
-    
-    return new GameState(boardCopy, piecesCopy, primaryPSCopy);
   }
+  
+  return new GameState(boardCopy, piecesCopy, primaryPSCopy);
+}
   
   /**
    * Update the board grid to reflect the current pieces' positions.
