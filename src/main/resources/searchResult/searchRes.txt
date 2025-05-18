@@ -2,7 +2,7 @@ Algorithm: A* Search
 Heuristic: Manhattan Distance
 Solution length: 5 moves
 Nodes visited: 42
-Max frontier size: 100
+Maximum frontier size: 100
 Search time: 123ms
 
 Step 0:

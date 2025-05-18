@@ -1,4 +1,4 @@
-package rushhour;
+package gui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -32,9 +32,9 @@ import gui.PieceColorManager;
 import gui.BoardDrawingUtil;
 
 /**
- * Kelas MainGUI untuk aplikasi Rush Hour Solver dengan antarmuka grafis.
+ * Kelas PlayPuzzle untuk aplikasi Rush Hour Solver dengan antarmuka grafis.
  */
-public class MainGUI extends JFrame {
+public class PlayPuzzle extends JFrame {
     private GameState gameState;
     private JPanel boardPanel;
     private JComboBox<Character> pieceSelector;
@@ -42,8 +42,11 @@ public class MainGUI extends JFrame {
     private JButton backwardButton;
     private JLabel statusLabel;
 
-    public MainGUI() {
-        super("Rush Hour Solver");
+    public PlayPuzzle() {
+        super("Rush Hour Game");
+
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
         initializeGUI();
     }
 
@@ -254,7 +257,7 @@ public class MainGUI extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            MainGUI gui = new MainGUI();
+            PlayPuzzle gui = new PlayPuzzle();
             gui.setVisible(true);
         });
     }

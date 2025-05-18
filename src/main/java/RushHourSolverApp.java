@@ -1,5 +1,8 @@
 package rushhour;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -49,6 +52,7 @@ import logic.PrimaryPiece;
 import util.ConfigParser;
 import gui.PieceColorManager;
 import gui.BoardDrawingUtil;
+import gui.PlayPuzzle;
 
 /**
  * Main application for the Rush Hour Solver with visualization capabilities.
@@ -489,21 +493,28 @@ public class RushHourSolverApp extends JFrame {
             boardVisualizer.setGameState(initialGameState);
             List<String> initialBoard = boardVisualizer.getCurrentBoardAsText();
             solutionSteps.add(initialBoard);
+
+            // Read from resource in the searchResult directory
+            InputStream inputStream = getClass().getClassLoader().getResourceAsStream("searchResult/searchRes.txt");
             
-            // Read from dummy file
-            File file = new File("searchRes.txt");
-            if (!file.exists()) {
-                JOptionPane.showMessageDialog(this,
-                    "Could not find searchRes.txt file. Creating a dummy solution instead.",
-                    "File Not Found", JOptionPane.WARNING_MESSAGE);
+            if (inputStream == null) {
+                // Try alternate locations if not found
+                inputStream = getClass().getClassLoader().getResourceAsStream("searchRes.txt");
                 
-                // Create dummy solution with just initial state
-                currentStepIndex = 0;
-                updateVisualization();
-                return;
+                if (inputStream == null) {
+                    // Create a fallback dummy solution if resource isn't found
+                    JOptionPane.showMessageDialog(this,
+                        "Could not find searchRes.txt resource. Creating a dummy solution instead.",
+                        "Resource Not Found", JOptionPane.WARNING_MESSAGE);
+                    
+                    // Create dummy solution with just initial state
+                    currentStepIndex = 0;
+                    updateVisualization();
+                    return;
+                }
             }
             
-            BufferedReader reader = new BufferedReader(new FileReader(file));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             String line;
             boolean readingBoard = false;
             List<String> boardLines = null;
@@ -631,9 +642,6 @@ public class RushHourSolverApp extends JFrame {
     }
     
     private void openGameWindow() {
-        if (isPlaying) {
-            stopAnimation();
-        }
         if (initialGameState == null) {
             JOptionPane.showMessageDialog(this, 
                 "Please load a configuration file first",
@@ -642,9 +650,22 @@ public class RushHourSolverApp extends JFrame {
         }
         
         // Create a new game window
-        MainGUI gameGUI = new MainGUI();
-        gameGUI.loadGameState(initialGameState);
-        gameGUI.setVisible(true);
+        final PlayPuzzle gameWindow = new PlayPuzzle();
+        
+        // Add a custom window listener that manually handles closing
+        gameWindow.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                gameWindow.setVisible(false);
+                gameWindow.dispose();
+            }
+        });
+        
+        // Tell the window to do nothing on close - our listener handles it
+        gameWindow.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        
+        gameWindow.loadGameState(initialGameState);
+        gameWindow.setVisible(true);
     }
     
     /**
@@ -781,7 +802,8 @@ public class RushHourSolverApp extends JFrame {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                new RushHourSolverApp();
+                RushHourSolverApp mainApp = new RushHourSolverApp();
+                mainApp.setVisible(true); 
             }
         });
     }
