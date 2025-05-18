@@ -9,6 +9,7 @@ public class Board {
   final private int rows, cols;
   final private char[][] grid;
   final private int[] outCoord = new int[2];
+  private final int exitSide; // 0=top, 1=right, 2=bottom, 3=left
 
   /**
    * Bikin papan permainan baru dengan ukuran yang kamu mau.
@@ -17,20 +18,22 @@ public class Board {
    * @param cols Jumlah kolom di papan
    * @param kX Koordinat X buat keluar
    * @param kY Koordinat Y buat keluar
-   */
-  public Board(int rows, int cols, int kX, int kY) {
+    * @param exitSide Sisi papan tempat pintu keluar (0=atas, 1=kanan, 2=bawah, 3=kiri)
+    */
+    public Board(int rows, int cols, int exitX, int exitY, int exitSide) {
     this.rows = rows;
     this.cols = cols;
     this.grid = new char[rows][cols];
-    this.outCoord[0] = kX;
-    this.outCoord[1] = kY;
+    this.outCoord[0] = exitX;
+    this.outCoord[1] = exitY;
+    this.exitSide = exitSide;
 
     for (int i = 0; i < rows; i++) {
-      for (int j = 0; j < cols; j++) {
+        for (int j = 0; j < cols; j++) {
         grid[i][j] = ' ';
-      }
+        }
     }
-  }
+    }
 
   /**
    * Ngeprint papan ke layar konsol.
@@ -79,6 +82,10 @@ public class Board {
    */
   public char[][] getGrid(){
     return grid;
+  }
+
+  public int getExitSide() {
+    return exitSide;
   }
 
   /**

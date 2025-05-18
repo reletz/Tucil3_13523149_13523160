@@ -54,35 +54,130 @@ public class ConfigParser {
       // Baca jumlah Block biasa
       int nonPrimaryPieceCount = Integer.parseInt(allLines.get(1).trim());
       
-      // Pastikan ada cukup baris untuk papan
-      // Check if we have enough lines for the board (2 header lines + rows)
-      if (allLines.size() - 2 < rows) {
-        throw new IOException("Konfigurasi papan tidak lengkap, expected " + rows + 
-                              " rows but found " + (allLines.size() - 2));
+      // Collect all content lines (skip header lines)
+      List<String> contentLines = new ArrayList<>();
+      for (int i = 2; i < allLines.size(); i++) {
+        contentLines.add(allLines.get(i));
       }
       
-      // Baca konfigurasi papan
-      char[][] grid = new char[rows][cols];
-      
       // Initialize grid with empty spaces
+      char[][] grid = new char[rows][cols];
       for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
           grid[i][j] = '.';
         }
       }
       
-      // Fill grid from file content
-      for (int i = 0; i < rows; i++) {
-        line = allLines.get(i + 2); // Skip first two lines (dimensions and piece count)
-        System.out.println("Processing line " + (i + 3) + ": [" + line + "]");
-        
-        for (int j = 0; j < Math.min(line.length(), cols); j++) {
-          grid[i][j] = line.charAt(j);
+      // First scan to find the exit position and side
+      int exitX = -1;
+      int exitY = -1;
+      int exitSide = -1; // 0=top, 1=right, 2=bottom, 3=left
+      boolean hasLeftExit = false;
+      boolean hasTopExit = false;
+      boolean hasBottomExit = false;
+      boolean hasRightExit = false;
+      
+      // STEP 1: Find exits outside the grid
+      
+      // Check for TOP exit (separate line before the board)
+      if (!contentLines.isEmpty() && isExitLine(contentLines.get(0))) {
+        hasTopExit = true;
+        String topLine = contentLines.get(0);
+        exitX = topLine.indexOf('K');
+        exitY = -1;
+        exitSide = 0; // Top
+        System.out.println("TOP EXIT found at column " + exitX);
+        contentLines.remove(0); // Remove this line so we don't process it as part of the board
+      }
+      
+      // Check for BOTTOM exit (separate line after the board)
+      if (contentLines.size() > rows && isExitLine(contentLines.get(rows))) {
+        hasBottomExit = true;
+        String bottomLine = contentLines.get(rows);
+        exitX = bottomLine.indexOf('K');
+        exitY = rows;
+        exitSide = 2; // Bottom
+        System.out.println("BOTTOM EXIT found at column " + exitX);
+        // We'll skip this line when processing the board
+      }
+      
+      // STEP 2: Process the actual board content
+      List<String> boardLines = new ArrayList<>();
+      
+      // Take only the rows we need for the board
+      for (int i = 0; i < Math.min(rows, contentLines.size()); i++) {
+        boardLines.add(contentLines.get(i));
+      }
+      
+      // STEP 3: Find exits in the board content
+      
+      // Check for LEFT EXIT in any row
+      for (int i = 0; i < boardLines.size(); i++) {
+        String rowLine = boardLines.get(i);
+        if (rowLine.trim().startsWith("K")) {
+          hasLeftExit = true;
+          exitX = -1;
+          exitY = i;
+          exitSide = 3; // Left
+          System.out.println("LEFT EXIT found at row " + i);
+          
+          // Update boardLine to remove K
+          boardLines.set(i, rowLine.replaceFirst("K", " "));
+          break;
         }
       }
       
-      // Print grid for verification
-      System.out.println("\nParsed grid:");
+      // Check for RIGHT EXIT in any row
+      if (exitSide == -1) {
+        for (int i = 0; i < boardLines.size(); i++) {
+          String rowLine = boardLines.get(i);
+          int kIndex = rowLine.indexOf('K');
+          
+          if (kIndex != -1 && (kIndex == rowLine.length() - 1 || kIndex >= cols)) {
+            hasRightExit = true;
+            exitX = cols;
+            exitY = i;
+            exitSide = 1; // Right
+            System.out.println("RIGHT EXIT found at row " + i);
+            
+            // Update boardLine to remove K
+            boardLines.set(i, rowLine.substring(0, kIndex));
+            break;
+          }
+        }
+      }
+      
+      // Check if we found an exit
+      if (exitSide == -1) {
+        throw new IOException("Exit ('K') not found in configuration");
+      }
+      
+      // STEP 4: Fill the grid from board lines, handling left exit for all rows
+      for (int i = 0; i < Math.min(rows, boardLines.size()); i++) {
+        String rowContent = boardLines.get(i);
+        
+        // If has left exit, skip first character of EVERY row
+        if (hasLeftExit) {
+          if (rowContent.length() > 0) {
+            rowContent = rowContent.substring(Math.min(1, rowContent.length()));
+          }
+        }
+        
+        // Fill grid from the processed content, skiping spaces and K
+        for (int j = 0; j < Math.min(rowContent.length(), cols); j++) {
+          if (j < rowContent.length()) {
+            char c = rowContent.charAt(j);
+            if (c != 'K' && c != ' ') {
+              grid[i][j] = c;
+            } else if (c == ' ') {
+              grid[i][j] = '.'; // Replace spaces with dots
+            }
+          }
+        }
+      }
+      
+      // Print final grid for verification
+      System.out.println("\nFinal grid (without K):");
       for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
           System.out.print(grid[i][j]);
@@ -90,33 +185,12 @@ public class ConfigParser {
         System.out.println();
       }
       
-        // Cari koordinat pintu keluar
-        int exitX = -1;
-        int exitY = -1;
-
-        // Scan original input lines for K
-        for (int i = 0; i < rows; i++) {
-        String inputLine = allLines.get(i + 2); // Skip first two header lines
-        int kIndex = inputLine.indexOf('K');
-        if (kIndex != -1) {
-            // Found K in this line
-            exitX = kIndex;
-            exitY = i;
-            
-            // Check if K is outside the grid (as it should be)
-            if (kIndex >= cols) {
-            System.out.println("Exit ('K') found outside grid at position (" + exitX + "," + exitY + ")");
-            } else {
-            System.out.println("Warning: Exit ('K') found inside grid at position (" + exitX + "," + exitY + ")");
-            // Still use it, for compatibility with input files that place K inside the grid
-            }
-            break;
-        }
-        }
-        
-      // Buat papan permainan
-      Board board = new Board(rows, cols, exitX, exitY);
-      board.setGrid(grid); // Set grid to the board
+      // Create board with exit information
+      Board board = new Board(rows, cols, exitX, exitY, exitSide);
+      board.setGrid(grid);
+      
+      // Debug exit information
+      System.out.println("Exit position: (" + exitX + "," + exitY + "), exit side: " + exitSide);
       
       // Identifikasi dan buat semua Block
       Map<Character, List<int[]>> pieceCoordinates = new HashMap<>();
@@ -125,7 +199,7 @@ public class ConfigParser {
       for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
           char cell = grid[i][j];
-          if (cell != '.' && cell != 'K') {
+          if (cell != '.' && cell != ' ' && cell != 'K') {
             pieceCoordinates.computeIfAbsent(cell, k -> new ArrayList<>())
                         .add(new int[]{j, i});
           }
@@ -185,6 +259,17 @@ public class ConfigParser {
           primaryPiece = new PrimaryPiece(label, size, isHorizontal);
           primaryX = minX;
           primaryY = minY;
+          
+          // Check if primary piece orientation is compatible with exit side
+          boolean validOrientation = 
+              (isHorizontal && (exitSide == 1 || exitSide == 3)) || // Horizontal piece with left/right exit
+              (!isHorizontal && (exitSide == 0 || exitSide == 2));  // Vertical piece with top/bottom exit
+          
+          if (!validOrientation) {
+            System.out.println("Warning: Primary piece orientation (" + 
+                              (isHorizontal ? "horizontal" : "vertical") + 
+                              ") may not be compatible with exit side (" + exitSide + ")");
+          }
         } else {
           Piece piece = new Piece(label, size, isHorizontal);
           pieces.add(piece);
@@ -198,12 +283,30 @@ public class ConfigParser {
         throw new IOException("Primary piece (P) not found in the configuration");
       }
       
-      // Create and return the GameState with the new structure
+      // Create and return the GameState with the original structure
       return new GameState(board, pieces, positionsX, positionsY, primaryPiece, primaryX, primaryY);
     } catch (Exception e) {
       System.out.println("Exception details: " + e);
       e.printStackTrace();
       throw new IOException("Error parsing configuration: " + e.getMessage(), e);
     }
+  }
+  
+  /**
+   * Checks if a line contains only 'K' and spaces (exit line)
+   */
+  private static boolean isExitLine(String line) {
+    if (line == null || line.isEmpty()) return false;
+    
+    line = line.trim();
+    if (line.equals("K")) return true; // Simple case - just "K"
+    
+    boolean hasK = false;
+    for (char c : line.toCharArray()) {
+      if (c == 'K') hasK = true;
+      else if (c != ' ') return false; // Contains character other than K or space
+    }
+    
+    return hasK; // True if it has K and only spaces otherwise
   }
 }

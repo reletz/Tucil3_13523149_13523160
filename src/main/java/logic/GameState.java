@@ -212,7 +212,16 @@ public class GameState {
      * @return true jika akan terjadi tabrakan, false jika tidak
      */
     public boolean wouldCollide(char pieceLabel, int newX, int newY) {
-        PieceState pieceToMove = pieces.get(pieceLabel);
+        // Get the piece that's moving
+        PieceState pieceToMove = null;
+        if (primaryPieceState.getPiece().getLabel() == pieceLabel) {
+            pieceToMove = primaryPieceState;
+        } else {
+            pieceToMove = pieces.get(pieceLabel);
+        }
+        
+        if (pieceToMove == null) return true; // Piece not found
+        
         Piece piece = pieceToMove.getPiece();
         
         // Check each cell the piece would occupy in the new position
@@ -243,6 +252,7 @@ public class GameState {
     public boolean isPrimaryPieceAtExit() {
         int exitX = board.getOutCoordX();
         int exitY = board.getOutCoordY();
+        int exitSide = board.getExitSide(); // Get exit side: 0=top, 1=right, 2=bottom, 3=left
         
         // Use Piece instead of PrimaryPiece to avoid ClassCastException
         Piece primaryPiece = primaryPieceState.getPiece();
@@ -252,21 +262,53 @@ public class GameState {
         // Debug output when checking goal state
         System.out.println("Checking goal: Primary at (" + primaryX + "," + primaryY + 
                         "), size=" + primaryPiece.getSize() + 
-                        ", Exit at (" + exitX + "," + exitY + ")");
-                        
-        // For horizontal primary piece (standard Rush Hour)
-        if (primaryPiece.isHorizontal()) {
-            int rightEdgeX = primaryX + primaryPiece.getSize() - 1;
-            boolean isGoal = (rightEdgeX == exitX - 1) && (primaryY == exitY);
-            System.out.println("Horizontal check: right edge at " + rightEdgeX + ", goal=" + isGoal);
-            return isGoal;
-        } 
-        // For vertical primary piece
-        else {
-            int bottomEdgeY = primaryY + primaryPiece.getSize() - 1;
-            boolean isGoal = (primaryX == exitX) && (bottomEdgeY == exitY - 1);
-            System.out.println("Vertical check: bottom edge at " + bottomEdgeY + ", goal=" + isGoal);
-            return isGoal;
+                        ", Exit at (" + exitX + "," + exitY + 
+                        "), Exit side=" + exitSide);
+        
+        // Check based on exit side
+        switch (exitSide) {
+            case 0: // Top exit
+                // Primary piece must be vertical and its top edge at y=0
+                if (!primaryPiece.isHorizontal()) {
+                    boolean isGoal = (primaryX == exitX) && (primaryY <= 0);
+                    System.out.println("Top exit check: primary at (" + primaryX + "," + primaryY + 
+                                "), goal=" + isGoal);
+                    return isGoal;
+                }
+                return false;
+                
+            case 1: // Right exit (standard)
+                // Primary piece must be horizontal and its right edge reaching the exit
+                if (primaryPiece.isHorizontal()) {
+                    int rightEdgeX = primaryX + primaryPiece.getSize() - 1;
+                    boolean isGoal = (rightEdgeX >= board.getGrid()[0].length - 1) && (primaryY == exitY);
+                    System.out.println("Right exit check: right edge at " + rightEdgeX + ", goal=" + isGoal);
+                    return isGoal;
+                }
+                return false;
+                
+            case 2: // Bottom exit
+                // Primary piece must be vertical and its bottom edge reaching the exit
+                if (!primaryPiece.isHorizontal()) {
+                    int bottomEdgeY = primaryY + primaryPiece.getSize() - 1;
+                    boolean isGoal = (primaryX == exitX) && (bottomEdgeY >= board.getGrid().length - 1);
+                    System.out.println("Bottom exit check: bottom edge at " + bottomEdgeY + ", goal=" + isGoal);
+                    return isGoal;
+                }
+                return false;
+                
+            case 3: // Left exit
+                // Primary piece must be horizontal and its left edge at x=0 or negative
+                if (primaryPiece.isHorizontal()) {
+                    boolean isGoal = (primaryX <= 0) && (primaryY == exitY);
+                    System.out.println("Left exit check: left edge at " + primaryX + ", goal=" + isGoal);
+                    return isGoal;
+                }
+                return false;
+                
+            default:
+                System.out.println("Invalid exit side: " + exitSide);
+                return false;
         }
     }
 
