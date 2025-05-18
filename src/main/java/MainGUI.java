@@ -1,3 +1,5 @@
+package rushhour;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -19,12 +21,15 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+
 import logic.Board;
 import logic.GameLogic;
 import logic.GameState;
 import logic.Piece;
 import logic.PrimaryPiece;
 import util.ConfigParser;
+import gui.PieceColorManager;
+import gui.BoardDrawingUtil;
 
 /**
  * Kelas MainGUI untuk aplikasi Rush Hour Solver dengan antarmuka grafis.
@@ -36,12 +41,10 @@ public class MainGUI extends JFrame {
     private JButton forwardButton;
     private JButton backwardButton;
     private JLabel statusLabel;
-    private Map<Character, Color> pieceColors;
 
     public MainGUI() {
         super("Rush Hour Solver");
         initializeGUI();
-        initializePieceColors();
     }
 
     private void initializeGUI() {
@@ -91,29 +94,6 @@ public class MainGUI extends JFrame {
         setLocationRelativeTo(null);
     }
 
-    private void initializePieceColors() {
-        pieceColors = new HashMap<>();
-        pieceColors.put('P', Color.RED); // Primary piece selalu merah
-        
-        // Warna lainnya untuk piece reguler
-        Color[] colors = {
-            Color.BLUE, Color.GREEN, Color.ORANGE, Color.PINK, 
-            Color.CYAN, Color.MAGENTA, Color.YELLOW, Color.DARK_GRAY,
-            new Color(165, 42, 42), // Brown
-            new Color(50, 205, 50), // Lime Green
-            new Color(138, 43, 226), // Purple
-            new Color(0, 191, 255) // Deep Sky Blue
-        };
-        
-        // Array untuk huruf A-Z kecuali P
-        char[] letters = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
-                          'M', 'N', 'O', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
-        
-        for (int i = 0; i < letters.length; i++) {
-            pieceColors.put(letters[i], colors[i % colors.length]);
-        }
-    }
-
     private void loadConfig() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Pilih File Konfigurasi");
@@ -137,18 +117,6 @@ public class MainGUI extends JFrame {
                     "Load Error", JOptionPane.ERROR_MESSAGE);
                 statusLabel.setText("Failed to load configuration");
             }
-        }
-    }
-
-    private void updatePieceSelector() {
-        pieceSelector.removeAllItems();
-        
-        // Add primary piece
-        pieceSelector.addItem(gameState.getPrimaryPieceState().getPiece().getLabel());
-        
-        // Add other pieces
-        for (GameState.PieceState pieceState : gameState.getPieces().values()) {
-            pieceSelector.addItem(pieceState.getPiece().getLabel());
         }
     }
 
@@ -231,105 +199,57 @@ public class MainGUI extends JFrame {
         
         Board board = gameState.getBoard();
         char[][] grid = board.getGrid();
-        int rows = grid.length;
-        int cols = grid[0].length;
-        
-        // Add padding of 1 cell on each side for exit visibility
-        int displayRows = rows + 2;  // +2 for top and bottom padding
-        int displayCols = cols + 2;  // +2 for left and right padding
-        
-        // Calculate cell size based on padded dimensions
-        int cellSize = Math.min(boardPanel.getWidth() / displayCols, 
-                            boardPanel.getHeight() / displayRows);
-        
-        // Drawing offset to center the padded board
-        int offsetX = (boardPanel.getWidth() - (displayCols * cellSize)) / 2;
-        int offsetY = (boardPanel.getHeight() - (displayRows * cellSize)) / 2;
         
         // First make sure the grid is updated based on current piece positions
         GameLogic.updateBoardGrid(gameState);
         
-        // Draw background
-        g.setColor(Color.WHITE);
-        g.fillRect(0, 0, boardPanel.getWidth(), boardPanel.getHeight());
-        
-        // Draw actual board area with darker lines
-        g.setColor(Color.BLACK);
-        for (int i = 1; i <= rows + 1; i++) {
-            g.drawLine(offsetX + cellSize, offsetY + i * cellSize, 
-                    offsetX + (cols + 1) * cellSize, offsetY + i * cellSize);
-        }
-        for (int j = 1; j <= cols + 1; j++) {
-            g.drawLine(offsetX + j * cellSize, offsetY + cellSize, 
-                    offsetX + j * cellSize, offsetY + (rows + 1) * cellSize);
-        }
-        
-        // Draw pieces on the board (with offset for padding)
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                char cell = grid[i][j];
-                if (cell != ' ') {
-                    // Set color based on piece type
-                    g.setColor(pieceColors.getOrDefault(cell, Color.GRAY));
-                    g.fillRect(offsetX + (j+1) * cellSize + 1, offsetY + (i+1) * cellSize + 1, 
-                            cellSize - 1, cellSize - 1);
-                    
-                    // Label piece
-                    g.setColor(Color.WHITE);
-                    g.setFont(new Font("Arial", Font.BOLD, cellSize / 2));
-                    g.drawString(String.valueOf(cell), 
-                                offsetX + (j+1) * cellSize + cellSize / 3, 
-                                offsetY + (i+1) * cellSize + 2 * cellSize / 3);
-                }
-            }
-        }
-        
-        // Draw exit with special color in the padding area
-        int exitX = board.getOutCoordX();
-        int exitY = board.getOutCoordY();
-        int exitSide = board.getExitSide();
-        
-        // Calculate actual drawing position based on exit side
-        int exitDrawX, exitDrawY;
-        switch (exitSide) {
-            case 0: // Top
-                exitDrawX = offsetX + (exitX+1) * cellSize;
-                exitDrawY = offsetY;
-                break;
-            case 1: // Right
-                exitDrawX = offsetX + (cols+1) * cellSize;
-                exitDrawY = offsetY + (exitY+1) * cellSize;
-                break;
-            case 2: // Bottom
-                exitDrawX = offsetX + (exitX+1) * cellSize;
-                exitDrawY = offsetY + (rows+1) * cellSize;
-                break;
-            case 3: // Left
-                exitDrawX = offsetX;
-                exitDrawY = offsetY + (exitY+1) * cellSize;
-                break;
-            default:
-                // Fallback for invalid exit side
-                exitDrawX = offsetX + (exitX+1) * cellSize;
-                exitDrawY = offsetY + (exitY+1) * cellSize;
-        }
-        
-        // Draw exit
-        g.setColor(new Color(255, 215, 0, 128)); // Gold with transparency
-        g.fillRect(exitDrawX, exitDrawY, cellSize, cellSize);
-        g.setColor(Color.BLACK);
+        // Use the shared drawing utility
+        BoardDrawingUtil.drawBoard(g, grid, grid.length, grid[0].length, 
+                            board.getOutCoordX(), board.getOutCoordY(), 
+                            board.getExitSide(), boardPanel);
+    }
 
-        // Use smaller font for EXIT text
-        int exitFontSize = Math.max(cellSize / 4, 9); // Minimum size of 9 for readability
-        g.setFont(new Font("Arial", Font.BOLD, exitFontSize));
+    /**
+     * Load a game state into the GUI
+     * 
+     * @param state The GameState to load
+     */
+    public void loadGameState(GameState state) {
+        this.gameState = state;
+        
+        // Update piece selector
+        updatePieceSelector();
+        
+        // Repaint the board
+        boardPanel.repaint();
+        
+        // Update status
+        statusLabel.setText("Game loaded. Select a piece to move.");
+        
+        // Enable control buttons
+        forwardButton.setEnabled(true);
+        backwardButton.setEnabled(true);
+    }
 
-        // Center text in the cell
-        FontMetrics fm = g.getFontMetrics();
-        int textWidth = fm.stringWidth("EXIT");
-        int textHeight = fm.getHeight();
-        g.drawString("EXIT", 
-            exitDrawX + (cellSize - textWidth) / 2, 
-            exitDrawY + (cellSize + textHeight) / 2 - fm.getDescent());
+    /**
+     * Update the piece selector dropdown with available pieces
+     */
+    private void updatePieceSelector() {
+        if (gameState == null) return;
+        
+        pieceSelector.removeAllItems();
+        
+        // Add primary piece
+        char primaryLabel = gameState.getPrimaryPieceState().getPiece().getLabel();
+        pieceSelector.addItem(primaryLabel);
+        
+        // Add other pieces
+        for (char label : gameState.getPieces().keySet()) {
+            pieceSelector.addItem(label);
+        }
+        
+        // Select primary piece by default
+        pieceSelector.setSelectedIndex(0);
     }
 
     public static void main(String[] args) {

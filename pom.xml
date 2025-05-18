@@ -13,7 +13,7 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <exec.mainClass>Main</exec.mainClass> <!-- Default main class -->
+        <exec.mainClass>rushhour.RushHourSolverApp</exec.mainClass> <!-- Default main class -->
     </properties>
 
     <build>
@@ -62,7 +62,7 @@
         <profile>
             <id>gui</id>
             <properties>
-                <exec.mainClass>MainGUI</exec.mainClass>
+                <exec.mainClass>rushhour.RushHourSolverApp</exec.mainClass>
             </properties>
         </profile>
         <profile>

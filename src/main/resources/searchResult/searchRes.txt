@@ -1,0 +1,96 @@
+Algorithm: A* Search
+Heuristic: Manhattan Distance
+Solution length: 5 moves
+Nodes visited: 42
+Max frontier size: 100
+Search time: 123ms
+
+Step 0:
+AAB..F
+..BCDF
+GPPCDF
+GH.III
+GHJ...
+LLJMM.
+Move: Initial state
+
+Step 1:
+AAB..F
+..BCDF
+GPPCDF
+GHIII.
+GHJ...
+LLJMM.
+Move: I left
+
+Step 2:
+AAB...
+..BCDF
+GPPCDF
+GHIIIF
+GHJ...
+LLJMM.
+Move: F down
+
+Step 3:
+AAB...
+..BCD.
+GPPCDF
+GHIIIF
+GHJ..F
+LLJMM.
+Move: F down
+
+Step 4:
+AAB...
+..BCD.
+GPPCD.
+GHIIIF
+GHJ..F
+LLJMMF
+Move: F down
+
+Step 5:
+AABC..
+..BCD.
+GPP.D.
+GHIIIF
+GHJ..F
+LLJMMF
+Move: C up
+
+Step 6:
+AABCD.
+..BCD.
+GPP...
+GHIIIF
+GHJ..F
+LLJMMF
+Move: D up
+
+Step 7:
+AABCD.
+..BCD.
+G.PP..
+GHIIIF
+GHJ..F
+LLJMMF
+Move: P right
+
+Step 8:
+AABCD.
+..BCD.
+G..PP.
+GHIIIF
+GHJ..F
+LLJMMF
+Move: P right
+
+Step 9:
+AABCD.
+..BCD.
+G...PP
+GHIIIF
+GHJ..F
+LLJMMF
+Move: P right
