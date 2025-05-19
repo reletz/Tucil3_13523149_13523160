@@ -38,6 +38,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.Timer;
 import javax.swing.JSlider;
@@ -49,7 +50,16 @@ import logic.GameLogic;
 import logic.GameState;
 import logic.Piece;
 import logic.PrimaryPiece;
+import logic.Node;
+
+import solver.algorithm.Solver;
+import solver.algorithm.UCSolver;
+import solver.algorithm.GBFSSolver;
+import solver.algorithm.AStarSolver;
+import solver.heuristic.Heuristic;
+
 import util.ConfigParser;
+
 import gui.PieceColorManager;
 import gui.BoardDrawingUtil;
 import gui.PlayPuzzle;
@@ -201,14 +211,43 @@ public class RushHourSolverApp extends JFrame {
         // Algorithm selection
         JPanel algoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         algoPanel.add(new JLabel("Algorithm:"));
-        
         algorithmCombo = new JComboBox<>(new String[] {
             "Uniform Cost Search (UCS)",
             "Greedy Best-First Search (GBFS)",
             "A* Search"
         });
-        algorithmCombo.setSelectedIndex(2); // Default to A*
+        algorithmCombo.setSelectedIndex(0); // Default to UCS
+
+        // Add listener to enable/disable heuristic based on algorithm selection
+        algorithmCombo.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Enable heuristic only for informed search algorithms
+                boolean isInformedSearch = !algorithmCombo.getSelectedItem().toString().contains("UCS");
+                heuristicCombo.setEnabled(isInformedSearch);
+                
+                // If UCS is selected, set heuristic to "None"
+                if (!isInformedSearch) {
+                    heuristicCombo.setSelectedItem("None");
+                } else if (heuristicCombo.getSelectedItem().equals("None")) {
+                    // If switching from UCS to informed search and "None" is selected, change to "Combined"
+                    heuristicCombo.setSelectedItem("Combined");
+                }
+            }
+        });
         algoPanel.add(algorithmCombo);
+
+        // Heuristic selection (for informed search)
+        algoPanel.add(new JLabel("Heuristic:"));
+        heuristicCombo = new JComboBox<>(new String[] {
+            "None",              // Add "None" option
+            "Manhattan Distance",
+            "Blocking Pieces",
+            "Combined"
+        });
+        heuristicCombo.setSelectedIndex(3); // Default to Combined
+        heuristicCombo.setEnabled(true);    // Enabled by default (for A*)
+        algoPanel.add(heuristicCombo);
         
         // Heuristic selection (for informed search)
         algoPanel.add(new JLabel("Heuristic:"));
@@ -471,17 +510,144 @@ public class RushHourSolverApp extends JFrame {
             return;
         }
         
-        // Get selected algorithm and heuristic
-        String algorithm = (String) algorithmCombo.getSelectedItem();
-        String heuristic = (String) heuristicCombo.getSelectedItem();
+        String algorithm = algorithmCombo.getSelectedItem().toString();
+        String heuristicStr = heuristicCombo.getSelectedItem().toString();
         
-        // For now, just use a dummy solution file
-        // In a real implementation, this would call your actual algorithm
-        loadDummySolution();
+        Solver solver;
+        Heuristic heuristic = null;
         
-        statusLabel.setText("Using algorithm: " + algorithm + 
-                          (algorithm.contains("A*") || algorithm.contains("GBFS") ? 
-                           " with heuristic: " + heuristic : ""));
+        // Create appropriate heuristic if needed
+        if (!heuristicStr.equals("None")) {
+            switch (heuristicStr) {
+                case "Manhattan Distance":
+                    // TODO
+                    // heuristic = new ManhattanDistanceHeuristic();
+                    break;
+                case "Blocking Pieces":
+                    // TODO
+                    // heuristic = new BlockingPiecesHeuristic();
+                    break;
+                case "Combined":
+                    // TODO
+                    // heuristic = new CombinedHeuristic();
+                    break;
+            }
+        }
+        
+        // Create appropriate solver
+        if (algorithm.contains("UCS")) {
+            solver = new UCSolver();
+        } else if (algorithm.contains("GBFS")) {
+            // Placeholder until implemented
+            solver = new UCSolver(); // Fallback to UCS for now
+            statusLabel.setText("GBFS not implemented yet, using UCS instead");
+        } else { // A*
+            solver = new UCSolver(); // Fallback to UCS for now
+            statusLabel.setText("A* not implemented yet, using UCS instead");
+        }
+        
+        statusLabel.setText("Solving puzzle with " + algorithm + "...");
+        
+        // Disable UI during solving
+        solveButton.setEnabled(false);
+        
+        // Run solver in background thread to prevent UI freeze
+        new SwingWorker<Node, Void>() {
+            @Override
+            protected Node doInBackground() throws Exception {
+                return solver.solve(initialGameState);
+            }
+            
+            @Override
+            protected void done() {
+                try {
+                    // Get result from background task
+                    Node solution = get();
+                    
+                    // Visualize the solution
+                    visualizeSolverResults(solver);
+                    
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(RushHourSolverApp.this, 
+                        "Error solving puzzle: " + e.getMessage(),
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                    statusLabel.setText("Failed to solve puzzle: " + e.getMessage());
+                    e.printStackTrace();
+                } finally {
+                    // Re-enable UI
+                    solveButton.setEnabled(true);
+                }
+            }
+        }.execute();
+    }
+
+    /**
+     * Visualize results directly from the solver
+     * @param solver The solver with solution results
+     */
+    private void visualizeSolverResults(Solver solver) {
+        // Check if we have a solution
+        List<Node> path = solver.getSolutionPath();
+        if (path == null || path.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                "No solution found! Explored " + solver.getNodesExplored() + " nodes.",
+                "No Solution", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        
+        try {
+            // Initialize solution steps list
+            solutionSteps = new ArrayList<>();
+            
+            // Convert each node in path to board representation
+            for (Node node : path) {
+                GameState state = node.getState();
+                
+                // Update game state for board rendering
+                GameLogic.updateBoardGrid(state);
+                
+                // Get text representation of board
+                char[][] grid = state.getBoard().getGrid();
+                List<String> boardLines = new ArrayList<>();
+                for (char[] row : grid) {
+                    boardLines.add(new String(row));
+                }
+                
+                // Add to solution steps
+                solutionSteps.add(boardLines);
+            }
+            
+            // Update statistics display
+            algorithmLabel.setText("Algorithm: " + solver.getClass().getSimpleName().replace("Solver", ""));
+            // heuristicLabel.setText("Heuristic: " + 
+            //     (solver instanceof UCSolver ? "None" : 
+            //     ((solver instanceof GBFSSolver || solver instanceof AStarSolver) ? 
+            //     ((InformedSearchSolver)solver).getHeuristic().getName() : "Unknown")));
+            heuristicLabel.setText("Heuristic: None");
+            solutionLengthLabel.setText("Solution length: " + (path.size() - 1) + " moves");
+            nodesVisitedLabel.setText("Nodes visited: " + solver.getNodesExplored());
+            maxFrontierLabel.setText("Max frontier size: " + solver.getMaxQueueSize());
+            searchTimeLabel.setText("Search time: " + solver.getExecutionTimeMs() + "ms");
+            
+            // Show first step
+            currentStepIndex = 0;
+            updateVisualization();
+            
+            // Enable navigation buttons
+            prevStepButton.setEnabled(false);
+            nextStepButton.setEnabled(solutionSteps.size() > 1);
+            playPauseButton.setEnabled(solutionSteps.size() > 1);
+            restartButton.setEnabled(false);
+            
+            statusLabel.setText("Solution found: " + solutionSteps.size() + " steps");
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, 
+                "Error visualizing solution: " + e.getMessage(),
+                "Error", JOptionPane.ERROR_MESSAGE);
+            statusLabel.setText("Failed to visualize solution: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
     
     private void loadDummySolution() {
