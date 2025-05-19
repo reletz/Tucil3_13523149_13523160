@@ -1,6 +1,7 @@
 package solver.algorithm;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import logic.GameState;
@@ -81,22 +82,18 @@ public abstract class Solver {
      * Builds the solution path by traversing up from the goal node.
      * 
      * @param goalNode The goal node
+     * @return The list of node
      */
-    protected void buildSolutionPath(Node goalNode) {
-        solutionPath.clear();
+    protected List<Node> buildPath(Node goalNode) {
+        LinkedList<Node> path = new LinkedList<>();
         Node current = goalNode;
         
-        // Collect nodes from goal to start
-        List<Node> reversePath = new ArrayList<>();
         while (current != null) {
-            reversePath.add(current);
+            path.addFirst(current);
             current = current.getParent();
         }
         
-        // Reverse to get path from start to goal
-        for (int i = reversePath.size() - 1; i >= 0; i--) {
-            solutionPath.add(reversePath.get(i));
-        }
+        return path;
     }
     
     /**
