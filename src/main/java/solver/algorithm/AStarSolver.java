@@ -1,7 +1,6 @@
 package solver.algorithm;
 
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Set;
@@ -9,28 +8,52 @@ import java.util.Set;
 import logic.GameLogic;
 import logic.GameState;
 import logic.Node;
+import solver.heuristic.BlockingPiecesHeuristic;
+import solver.heuristic.Heuristic;
 
-public class AStarSolver extends Solver {
+public class AStarSolver extends InformedSolver {
+  
+  public AStarSolver(Heuristic heuristic) {
+    super(heuristic);
+  }
+
+  public AStarSolver(){
+    this(new BlockingPiecesHeuristic());
+  }
+
   @Override
   /**
-   * Generate a solution to a 
+   * Solves the Rush Hour puzzle using A* search algorithm.
+   * This algorithm finds the optimal solution by combining:
+   * - g(n): actual cost from start to current node
+   * - h(n): estimated cost from current node to goal
+   * - f(n) = g(n) + h(n): estimated total cost through this node
+   *
+   * @param initialState The starting game state
+   * @return The goal node containing the solution path, or null if no solution found
    */
-  public Node solve(GameState initialState){
+  public Node solve(GameState initialState) {
     long startTime = System.currentTimeMillis();
 
-    PriorityQueue<Node> searchQueue = new PriorityQueue<>();
-    Set<GameState> visited = new HashSet<>();
+    // Initialize priority queue with starting node
+    PriorityQueue<Node> openSet = new PriorityQueue<>();
+    Set<GameState> closedSet = new HashSet<>();
 
+    // Create start node with heuristic evaluation
     Node startNode = new Node(initialState);
-    searchQueue.add(startNode);
+    int startHeuristic = heuristic.calculate(initialState);
+    startNode.setHeuristicValue(startHeuristic);
+    openSet.add(startNode);
 
     int nodesExplored = 0;
     int maxQueueSize = 1;
-    while (!searchQueue.isEmpty()){
-      // Pop
-      Node current = searchQueue.poll();
+
+    while (!openSet.isEmpty()) {
+      // Get node with lowest f value
+      Node current = openSet.poll();
       nodesExplored++;
 
+      // Goal test
       if (current.isGoalState()) {
         this.solutionPath = buildPath(current);
         this.nodesExplored = nodesExplored;
@@ -38,27 +61,32 @@ public class AStarSolver extends Solver {
         this.maxQueueSize = maxQueueSize;
         return current;
       }
-      
-      if (visited.contains(current.getState())){
+
+      // Skip if already visited
+      if (closedSet.contains(current.getState())) {
         continue;
       }
 
-      visited.add(current.getState());
-      
-      // Generate all possible moves from this state
-      List<Node> successors = GameLogic.generateSuccessors(current);
-      
-      // Add all valid successors to the queue
+      // Add to visited set
+      closedSet.add(current.getState());
+
+      // Generate successors
+      List<Node> successors = GameLogic.generateSuccessors(current, heuristic);
+
+      // Process each successor
       for (Node successor : successors) {
-        if (!visited.contains(successor.getState())) {
-          searchQueue.add(successor);
+        // Skip if already visited
+        if (!closedSet.contains(successor.getState())) {
+          // Note: The heuristic has already been applied by generateSuccessors
+          // The Node compareTo method will use totalCost for priority queue ordering
+          openSet.add(successor);
         }
       }
-      
-      // Update max queue size
-      maxQueueSize = Math.max(maxQueueSize, searchQueue.size());
+
+      // Track maximum queue size for statistics
+      maxQueueSize = Math.max(maxQueueSize, openSet.size());
     }
-    
+
     // No solution found
     this.nodesExplored = nodesExplored;
     this.executionTimeMs = System.currentTimeMillis() - startTime;
@@ -66,20 +94,8 @@ public class AStarSolver extends Solver {
     return null;
   }
 
-  private List<Node> buildPath(Node goalNode) {
-    LinkedList<Node> path = new LinkedList<>();
-    Node current = goalNode;
-    
-    while (current != null) {
-      path.addFirst(current);
-      current = current.getParent();
-    }
-    
-    return path;
-  }
-  
   @Override
   public String getAlgorithmName() {
-    return "Uniform Cost Search";
+    return "A* Search";
   }
 }

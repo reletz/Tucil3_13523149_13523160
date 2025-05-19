@@ -4,8 +4,10 @@ import logic.Board;
 import logic.GameManager;
 import logic.GameState;
 import logic.Node;
+import solver.algorithm.AStarSolver;
 import solver.algorithm.Solver;
 import solver.algorithm.UCSolver;
+import solver.heuristic.Heuristic;
 
 /**
  * Kelas Main untuk aplikasi Rush Hour Solver.
@@ -49,6 +51,7 @@ public class Main {
      */
     private static void runSelectedAlgorithm(GameState gameState, int choice) {    
         Solver solver = null;
+        Heuristic heuristic = null;
 
         switch (choice) {
             case 1:
@@ -62,9 +65,8 @@ public class Main {
                 return;
             case 3:
                 System.out.println("Algoritma A* dipilih");
-                // TODO: Implement A*
-                System.out.println("Algoritma belum diimplementasikan");
-                return;
+                solver = new AStarSolver();
+                break;
             default:
                 System.out.println("Pilihan tidak valid");
                 return;

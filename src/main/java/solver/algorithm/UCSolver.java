@@ -65,18 +65,6 @@ public class UCSolver extends Solver {
     this.maxQueueSize = maxQueueSize;
     return null;
   }
-
-  private List<Node> buildPath(Node goalNode) {
-    LinkedList<Node> path = new LinkedList<>();
-    Node current = goalNode;
-    
-    while (current != null) {
-      path.addFirst(current);
-      current = current.getParent();
-    }
-    
-    return path;
-  }
   
   @Override
   public String getAlgorithmName() {

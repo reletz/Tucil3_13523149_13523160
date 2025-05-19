@@ -1,0 +1,11 @@
+8 8
+13
+ K
+......AA
+......BB
+QQQ...CC
+....J...
+....J...
+DDEE....
+GPHHIII.
+GP.RRLLL
