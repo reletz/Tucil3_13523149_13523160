@@ -50,12 +50,13 @@ public class GameManager {
         System.out.println("1. Uniform Cost Search (UCS)");
         System.out.println("2. Greedy Best-First Search");
         System.out.println("3. A* Search");
+        System.out.println("4. Branch and Bound Search");
         System.out.print("Pilihan: ");
         
         int choice;
         try {
             choice = Integer.parseInt(scanner.nextLine().trim());
-            if (choice < 1 || choice > 3) {
+            if (choice < 1 || choice > 4) {
                 System.out.println("Input tidak valid, menggunakan UCS.");
                 choice = 1;
             }
