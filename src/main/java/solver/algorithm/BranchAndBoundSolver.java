@@ -9,7 +9,7 @@ import java.util.Set;
 import logic.GameLogic;
 import logic.GameState;
 import logic.Node;
-import solver.heuristic.BlockingPiecesHeuristic;
+import solver.heuristic.*;
 
 /**
  * Implementation of the Branch and Bound algorithm for Rush Hour puzzle solving.
@@ -18,6 +18,10 @@ import solver.heuristic.BlockingPiecesHeuristic;
  */
 public class BranchAndBoundSolver extends InformedSolver {
     private int upperBound;
+
+    public BranchAndBoundSolver(Heuristic heuristic) {
+      super(heuristic);
+    }
     
     public BranchAndBoundSolver() {
       super(new BlockingPiecesHeuristic());

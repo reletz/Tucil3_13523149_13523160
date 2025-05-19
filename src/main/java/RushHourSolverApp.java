@@ -24,7 +24,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
 
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -45,24 +47,11 @@ import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import logic.Board;
-import logic.GameLogic;
-import logic.GameState;
-import logic.Piece;
-import logic.PrimaryPiece;
-import logic.Node;
-
-import solver.algorithm.Solver;
-import solver.algorithm.UCSolver;
-import solver.algorithm.GBFSSolver;
-import solver.algorithm.AStarSolver;
-import solver.heuristic.Heuristic;
-
-import util.ConfigParser;
-
-import gui.PieceColorManager;
-import gui.BoardDrawingUtil;
-import gui.PlayPuzzle;
+import logic.*;
+import solver.algorithm.*;
+import solver.heuristic.*;
+import util.*;
+import gui.*;
 
 /**
  * Main application for the Rush Hour Solver with visualization capabilities.
@@ -207,56 +196,70 @@ public class RushHourSolverApp extends JFrame {
             }
         });
         filePanel.add(loadConfigButton);
-        
+
         // Algorithm selection
         JPanel algoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         algoPanel.add(new JLabel("Algorithm:"));
         algorithmCombo = new JComboBox<>(new String[] {
             "Uniform Cost Search (UCS)",
             "Greedy Best-First Search (GBFS)",
-            "A* Search"
+            "A* Search",
+            "Branch and Bound"
         });
         algorithmCombo.setSelectedIndex(0); // Default to UCS
 
-        // Add listener to enable/disable heuristic based on algorithm selection
+        // Prepare two different ComboBox models - one for UCS, one for informed search
+        String[] informedHeuristics = new String[] {
+            "Manhattan Distance",
+            "Blocking Pieces",
+            "Distance To Exit",
+            "Piece Density",
+            "Combined"
+        };
+
+        // Add listener to handle algorithm changes
         algorithmCombo.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Enable heuristic only for informed search algorithms
-                boolean isInformedSearch = !algorithmCombo.getSelectedItem().toString().contains("UCS");
-                heuristicCombo.setEnabled(isInformedSearch);
+                boolean isUCS = algorithmCombo.getSelectedItem().toString().contains("UCS");
                 
-                // If UCS is selected, set heuristic to "None"
-                if (!isInformedSearch) {
-                    heuristicCombo.setSelectedItem("None");
-                } else if (heuristicCombo.getSelectedItem().equals("None")) {
-                    // If switching from UCS to informed search and "None" is selected, change to "Combined"
-                    heuristicCombo.setSelectedItem("Combined");
+                if (isUCS) {
+                    // For UCS: Disable heuristic selection entirely
+                    heuristicCombo.setEnabled(false);
+                    
+                    // Create a custom disabled model showing "N/A"
+                    DefaultComboBoxModel<String> ucsModel = new DefaultComboBoxModel<>(new String[] {"N/A"});
+                    heuristicCombo.setModel(ucsModel);
+                    heuristicCombo.setSelectedIndex(0);
+                } else {
+                    // For informed search: Enable and set proper model
+                    heuristicCombo.setEnabled(true);
+                    
+                    // Store current selection if it exists
+                    String currentSelection = null;
+                    if (heuristicCombo.getItemCount() > 0 && !heuristicCombo.getSelectedItem().equals("N/A")) {
+                        currentSelection = (String)heuristicCombo.getSelectedItem();
+                    }
+                    
+                    // Set informed search model
+                    DefaultComboBoxModel<String> informedModel = new DefaultComboBoxModel<>(informedHeuristics);
+                    heuristicCombo.setModel(informedModel);
+                    
+                    // Try to restore previous selection, or default to first option
+                    if (currentSelection != null && Arrays.asList(informedHeuristics).contains(currentSelection)) {
+                        heuristicCombo.setSelectedItem(currentSelection);
+                    } else {
+                        heuristicCombo.setSelectedIndex(0); // Default to first heuristic
+                    }
                 }
             }
         });
         algoPanel.add(algorithmCombo);
 
-        // Heuristic selection (for informed search)
+        // Heuristic selection
         algoPanel.add(new JLabel("Heuristic:"));
-        heuristicCombo = new JComboBox<>(new String[] {
-            "None",              // Add "None" option
-            "Manhattan Distance",
-            "Blocking Pieces",
-            "Combined"
-        });
-        heuristicCombo.setSelectedIndex(3); // Default to Combined
-        heuristicCombo.setEnabled(true);    // Enabled by default (for A*)
-        algoPanel.add(heuristicCombo);
-        
-        // Heuristic selection (for informed search)
-        algoPanel.add(new JLabel("Heuristic:"));
-        heuristicCombo = new JComboBox<>(new String[] {
-            "Manhattan Distance",
-            "Blocking Pieces",
-            "Combined"
-        });
-        heuristicCombo.setSelectedIndex(2); // Default to Combined
+        heuristicCombo = new JComboBox<>(new String[] {"N/A"});
+        heuristicCombo.setEnabled(false); // Initially disabled for UCS
         algoPanel.add(heuristicCombo);
         
         // Action buttons
@@ -520,16 +523,19 @@ public class RushHourSolverApp extends JFrame {
         if (!heuristicStr.equals("None")) {
             switch (heuristicStr) {
                 case "Manhattan Distance":
-                    // TODO
-                    // heuristic = new ManhattanDistanceHeuristic();
+                    heuristic = new ManhattanDistanceHeuristic();
                     break;
                 case "Blocking Pieces":
-                    // TODO
-                    // heuristic = new BlockingPiecesHeuristic();
+                    heuristic = new BlockingPiecesHeuristic();
                     break;
                 case "Combined":
-                    // TODO
-                    // heuristic = new CombinedHeuristic();
+                    heuristic = new CombinedHeuristic();
+                    break;
+                case "Distance to Exit":
+                    heuristic = new DistanceToExitHeuristic();
+                    break;
+                case "Piece Density":
+                    heuristic = new PieceDensityHeuristic();
                     break;
             }
         }
@@ -539,15 +545,19 @@ public class RushHourSolverApp extends JFrame {
             solver = new UCSolver();
         } else if (algorithm.contains("GBFS")) {
             // Placeholder until implemented
-            solver = new UCSolver(); // Fallback to UCS for now
-            statusLabel.setText("GBFS not implemented yet, using UCS instead");
-        } else { // A*
-            solver = new UCSolver(); // Fallback to UCS for now
-            statusLabel.setText("A* not implemented yet, using UCS instead");
+            solver = new BestFSolver(heuristic);
+        } else if (algorithm.contains("A* Search")) {
+            solver = new AStarSolver(heuristic);
+        } else {
+            solver = new BranchAndBoundSolver(heuristic);
         }
         
-        statusLabel.setText("Solving puzzle with " + algorithm + "...");
-        
+        if (heuristic != null) {
+            statusLabel.setText("Solving puzzle with " + algorithm + "; Heuristic: " + heuristic.getName());
+        } else {
+            statusLabel.setText("Solving puzzle with " + algorithm);
+        }
+
         // Disable UI during solving
         solveButton.setEnabled(false);
         
@@ -618,11 +628,11 @@ public class RushHourSolverApp extends JFrame {
             }
             
             // Update statistics display
-            algorithmLabel.setText("Algorithm: " + solver.getClass().getSimpleName().replace("Solver", ""));
-            // heuristicLabel.setText("Heuristic: " + 
-            //     (solver instanceof UCSolver ? "None" : 
-            //     ((solver instanceof GBFSSolver || solver instanceof AStarSolver) ? 
-            //     ((InformedSearchSolver)solver).getHeuristic().getName() : "Unknown")));
+            algorithmLabel.setText("Algorithm: " + solver.getClass().getSimpleName());
+            heuristicLabel.setText("Heuristic: " + 
+                (solver instanceof UCSolver ? "None" : 
+                (solver instanceof InformedSolver ? 
+                ((InformedSolver)solver).getHeuristic().getName() : "Unknown")));
             heuristicLabel.setText("Heuristic: None");
             solutionLengthLabel.setText("Solution length: " + (path.size() - 1) + " moves");
             nodesVisitedLabel.setText("Nodes visited: " + solver.getNodesExplored());
@@ -647,120 +657,6 @@ public class RushHourSolverApp extends JFrame {
                 "Error", JOptionPane.ERROR_MESSAGE);
             statusLabel.setText("Failed to visualize solution: " + e.getMessage());
             e.printStackTrace();
-        }
-    }
-    
-    private void loadDummySolution() {
-        try {
-            // Initialize solution steps list
-            solutionSteps = new ArrayList<>();
-            
-            // Add initial state as first step
-            boardVisualizer.setGameState(initialGameState);
-            List<String> initialBoard = boardVisualizer.getCurrentBoardAsText();
-            solutionSteps.add(initialBoard);
-
-            // Read from resource in the searchResult directory
-            InputStream inputStream = getClass().getClassLoader().getResourceAsStream("searchResult/searchRes.txt");
-            
-            if (inputStream == null) {
-                // Try alternate locations if not found
-                inputStream = getClass().getClassLoader().getResourceAsStream("searchRes.txt");
-                
-                if (inputStream == null) {
-                    // Create a fallback dummy solution if resource isn't found
-                    JOptionPane.showMessageDialog(this,
-                        "Could not find searchRes.txt resource. Creating a dummy solution instead.",
-                        "Resource Not Found", JOptionPane.WARNING_MESSAGE);
-                    
-                    // Create dummy solution with just initial state
-                    currentStepIndex = 0;
-                    updateVisualization();
-                    return;
-                }
-            }
-            
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            String line;
-            boolean readingBoard = false;
-            List<String> boardLines = null;
-
-            // Tracking stats
-            String algorithm = "-";
-            String heuristic = "-";
-            String solutionLength = "-";
-            String nodesVisited = "-";
-            String maxFrontier = "-";
-            String searchTime = "-";
-            
-            while ((line = reader.readLine()) != null) {
-                // Parse statistics
-                if (line.startsWith("Algorithm:")) {
-                    algorithm = line.substring("Algorithm:".length()).trim();
-                } else if (line.startsWith("Heuristic:")) {
-                    heuristic = line.substring("Heuristic:".length()).trim();
-                } else if (line.startsWith("Solution length:")) {
-                    solutionLength = line.substring("Solution length:".length()).trim();
-                } else if (line.startsWith("Nodes visited:")) {
-                    nodesVisited = line.substring("Nodes visited:".length()).trim();
-                } else if (line.startsWith("Maximum frontier size:")) {
-                    maxFrontier = line.substring("Maximum frontier size:".length()).trim();
-                } else if (line.startsWith("Search time:")) {
-                    searchTime = line.substring("Search time:".length()).trim();
-                }
-                // Parse board steps
-                else if (line.startsWith("Step ")) {
-                    // New step found - save previous board if exists
-                    if (boardLines != null && !boardLines.isEmpty()) {
-                        solutionSteps.add(new ArrayList<>(boardLines));
-                    }
-                    
-                    // Start new board
-                    readingBoard = true;
-                    boardLines = new ArrayList<>();
-                } 
-                else if (readingBoard && line.matches("^[A-Za-z\\.]+$")) {
-                    // This looks like a board line - collect it
-                    boardLines.add(line);
-                }
-                else if (line.trim().isEmpty()) {
-                    // Empty line - end of board
-                    readingBoard = false;
-                }
-            }
-            
-            // Add the last board if needed
-            if (boardLines != null && !boardLines.isEmpty()) {
-                solutionSteps.add(new ArrayList<>(boardLines));
-            }
-            
-            reader.close();
-            
-            // Update stats display
-            algorithmLabel.setText("Algorithm: " + algorithm);
-            heuristicLabel.setText("Heuristic: " + heuristic);
-            solutionLengthLabel.setText("Solution length: " + solutionLength);
-            nodesVisitedLabel.setText("Nodes visited: " + nodesVisited);
-            maxFrontierLabel.setText("Max frontier size: " + maxFrontier);
-            searchTimeLabel.setText("Search time: " + searchTime);
-            
-            // Show first step
-            currentStepIndex = 0;
-            updateVisualization();
-            
-            // Enable navigation buttons
-            prevStepButton.setEnabled(false);
-            nextStepButton.setEnabled(solutionSteps.size() > 1);
-            playPauseButton.setEnabled(solutionSteps.size() > 1);
-            restartButton.setEnabled(false);
-            
-            statusLabel.setText("Solution loaded: " + solutionSteps.size() + " steps");
-            
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, 
-                "Error loading solution: " + e.getMessage(),
-                "Error", JOptionPane.ERROR_MESSAGE);
-            statusLabel.setText("Failed to load solution: " + e.getMessage());
         }
     }
     
