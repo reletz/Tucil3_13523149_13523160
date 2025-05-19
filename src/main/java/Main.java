@@ -5,6 +5,7 @@ import logic.GameManager;
 import logic.GameState;
 import logic.Node;
 import solver.algorithm.AStarSolver;
+import solver.algorithm.BestFSolver;
 import solver.algorithm.Solver;
 import solver.algorithm.UCSolver;
 import solver.heuristic.Heuristic;
@@ -60,9 +61,8 @@ public class Main {
                 break;
             case 2:
                 System.out.println("Algoritma Greedy Best-First Search dipilih");
-                // TODO: Implement Greedy
-                System.out.println("Algoritma belum diimplementasikan");
-                return;
+                solver = new BestFSolver();
+                break;
             case 3:
                 System.out.println("Algoritma A* dipilih");
                 solver = new AStarSolver();
