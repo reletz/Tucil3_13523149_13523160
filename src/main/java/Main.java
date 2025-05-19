@@ -6,6 +6,7 @@ import logic.GameState;
 import logic.Node;
 import solver.algorithm.AStarSolver;
 import solver.algorithm.BestFSolver;
+import solver.algorithm.BranchAndBoundSolver;
 import solver.algorithm.Solver;
 import solver.algorithm.UCSolver;
 import solver.heuristic.Heuristic;
@@ -66,6 +67,10 @@ public class Main {
             case 3:
                 System.out.println("Algoritma A* dipilih");
                 solver = new AStarSolver();
+                break;
+            case 4:
+                System.out.println("Algoritma Branch and Bound dipilih");
+                solver = new BranchAndBoundSolver();
                 break;
             default:
                 System.out.println("Pilihan tidak valid");
