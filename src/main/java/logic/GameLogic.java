@@ -71,88 +71,90 @@ public class GameLogic {
 
         // Calculate new position based on direction
         switch (direction) {
-      case 0 -> { // Right
-        if (!piece.isHorizontal()) return null; // Can only move horizontally
-        newX = currentX + 1;
-      }
-      case 1 -> { // Down
-        if (piece.isHorizontal()) return null; // Can only move vertically
-        newY = currentY + 1;
-      }
-      case 2 -> { // Left
-        if (!piece.isHorizontal()) return null; // Can only move horizontally
-        newX = currentX - 1;
-      }
-      case 3 -> { // Up
-        if (piece.isHorizontal()) return null; // Can only move vertically
-        newY = currentY - 1;
-      }
-      default -> { return null; } // Invalid direction
-    }
-    
-    // Get board information
-    Board board = gameState.getBoard();
-    int boardWidth = board.getGrid()[0].length;
-    int boardHeight = board.getGrid().length;
-    int exitSide = board.getExitSide();
-    int exitX = board.getOutCoordX();
-    int exitY = board.getOutCoordY();
-    
-    // Check if the primary piece can exit through any side
-    boolean canExit = false;
-    
-    if (isPrimary) {
-        // For primary piece, check if it's about to exit through the designated exit
-        switch (exitSide) {
-            case 0: // Top exit
-          // Vertical piece moving up, with its top aligned with the exit
-          // position
-          canExit = !piece.isHorizontal() && direction == 3 && newX == exitX
-              && currentY == 0;
-          break;
-
-      case 1: // Right exit
-          // Horizontal piece moving right, with its right end aligned with the
-          // exit position
-          canExit = piece.isHorizontal() && direction == 0
-              && currentX + piece.getSize() == boardWidth && currentY == exitY;
-          break;
-
-      case 2: // Bottom exit
-          // Vertical piece moving down, with its bottom aligned with the exit
-          // position
-          canExit = !piece.isHorizontal() && direction == 1 && newX == exitX
-              && currentY + piece.getSize() == boardHeight;
-          break;
-
-      case 3: // Left exit
-          // Horizontal piece moving left, with its left end aligned with the
-          // exit position
-          canExit = piece.isHorizontal() && direction == 2 && currentX == 0
-              && currentY == exitY;
-          break;
+            case 0 -> { // Right
+                if (!piece.isHorizontal()) return null; // Can only move horizontally
+                newX = currentX + 1;
+            }
+            case 1 -> { // Down
+                if (piece.isHorizontal()) return null; // Can only move vertically
+                newY = currentY + 1;
+            }
+            case 2 -> { // Left
+                if (!piece.isHorizontal()) return null; // Can only move horizontally
+                newX = currentX - 1;
+            }
+            case 3 -> { // Up
+                if (piece.isHorizontal()) return null; // Can only move vertically
+                newY = currentY - 1;
+            }
+            default -> { return null; } // Invalid direction
         }
-    }
+    
+        // Get board information
+        Board board = gameState.getBoard();
+        int boardWidth = board.getGrid()[0].length;
+        int boardHeight = board.getGrid().length;
+        int exitSide = board.getExitSide();
+        int exitX = board.getOutCoordX();
+        int exitY = board.getOutCoordY();
+        
+        // Check if the primary piece can exit through any side
+        boolean canExit = false;
+        
+        if (isPrimary) {
+            // For primary piece, check if it's about to exit through the designated exit
+            switch (exitSide) {
+                case 0: // Top exit
+                    // Vertical piece moving up, with its top aligned with the exit
+                    // position
+                    canExit = !piece.isHorizontal() && direction == 3
+                        && newX == exitX && currentY == 0;
+                    break;
 
-    // Check bounds for non-exit moves
-    if (!canExit) {
-        // Regular bound checking
-        if (newX < 0 || newY < 0
-            || (piece.isHorizontal() && newX + piece.getSize() > boardWidth)
-            || (!piece.isHorizontal()
-                && newY + piece.getSize() > boardHeight)) {
-            return null; // Out of bounds
+                case 1: // Right exit
+                    // Horizontal piece moving right, with its right end aligned
+                    // with the exit position
+                    canExit = piece.isHorizontal() && direction == 0
+                        && currentX + piece.getSize() == boardWidth
+                        && currentY == exitY;
+                    break;
+
+                case 2: // Bottom exit
+                    // Vertical piece moving down, with its bottom aligned with the
+                    // exit position
+                    canExit = !piece.isHorizontal() && direction == 1
+                        && newX == exitX
+                        && currentY + piece.getSize() == boardHeight;
+                    break;
+
+                case 3: // Left exit
+                    // Horizontal piece moving left, with its left end aligned with
+                    // the exit position
+                    canExit = piece.isHorizontal() && direction == 2
+                        && currentX == 0 && currentY == exitY;
+                    break;
+            }
         }
 
-        // Check for collisions with other pieces
-        if (wouldCollide(gameState, pieceLabel, newX, newY)) {
-            return null; // Collision detected
-        }
-    }
+        // Check bounds for non-exit moves
+        if (!canExit) {
+            // Regular bound checking
+            if (newX < 0 || newY < 0
+                || (piece.isHorizontal() && newX + piece.getSize() > boardWidth)
+                || (!piece.isHorizontal()
+                    && newY + piece.getSize() > boardHeight)) {
+                return null; // Out of bounds
+            }
 
-    // Create a new game state with the updated position
-    return createNewStateWithMovedPiece(gameState, pieceLabel, newX, newY);
-}
+            // Check for collisions with other pieces
+            if (wouldCollide(gameState, pieceLabel, newX, newY)) {
+                return null; // Collision detected
+            }
+        }
+
+        // Create a new game state with the updated position
+        return createNewStateWithMovedPiece(gameState, pieceLabel, newX, newY);
+    }
 
     /**
      * Geser Block ke kanan (hanya untuk Block horizontal).
@@ -226,26 +228,20 @@ public class GameLogic {
         GameState gameState, char pieceLabel, int newX, int newY) {
         Board originalBoard = gameState.getBoard();
         char[][] originalGrid = originalBoard.getGrid();
-        
+
         // Create a new grid with the same dimensions
         int rows = originalGrid.length;
         int cols = originalGrid[0].length;
         char[][] newGrid = new char[rows][cols];
-        
+
         // Copy grid values
         for (int i = 0; i < rows; i++) {
             System.arraycopy(originalGrid[i], 0, newGrid[i], 0, cols);
         }
-        
+
         // Create a new board with the copied grid
-        Board boardCopy = new Board(
-            rows, 
-            cols, 
-            originalBoard.getOutCoordX(),
-            originalBoard.getOutCoordY(),
-            originalBoard.getExitSide()
-        );
-    
+        Board boardCopy = new Board(rows, cols, originalBoard.getOutCoordX(),
+            originalBoard.getOutCoordY(), originalBoard.getExitSide());
 
         // Copy all pieces
         Map<Character, GameState.PieceState> piecesCopy = new HashMap<>();
@@ -296,7 +292,7 @@ public class GameLogic {
             }
         }
         GameState newState = new GameState(boardCopy, piecesCopy, primaryPSCopy);
-    
+
         // Update the board grid to reflect the new piece positions
         updateBoardGrid(newState);
 
@@ -316,13 +312,15 @@ public class GameLogic {
             if (piece.isHorizontal()) {
                 int currentX = x + i;
                 // Skip cells that are outside the board
-                if (currentX >= 0 && currentX < boardWidth && y >= 0 && y < boardHeight) {
+                if (currentX >= 0 && currentX < boardWidth && y >= 0
+                    && y < boardHeight) {
                     grid[y][currentX] = piece.getLabel();
                 }
             } else {
                 int currentY = y + i;
                 // Skip cells that are outside the board
-                if (x >= 0 && x < boardWidth && currentY >= 0 && currentY < boardHeight) {
+                if (x >= 0 && x < boardWidth && currentY >= 0
+                    && currentY < boardHeight) {
                     grid[currentY][x] = piece.getLabel();
                 }
             }
@@ -348,7 +346,7 @@ public class GameLogic {
         }
     }
 
-        /**
+    /**
      * Generates all possible successor nodes from the current game state.
      * This method tries moving each piece in all valid directions and creates
      * Node objects for each valid move.
@@ -357,76 +355,75 @@ public class GameLogic {
      * @param heuristic The heuristic function to use (can be null for UCS)
      * @return List of successor nodes
      */
-    public static List<Node> generateSuccessors(Node currentNode, solver.heuristic.Heuristic heuristic) {
+    public static List<Node> generateSuccessors(
+        Node currentNode, solver.heuristic.Heuristic heuristic) {
         List<Node> successors = new ArrayList<>();
         GameState currentState = currentNode.getState();
-        
+
         // Get all pieces including the primary piece
-        Map<Character, GameState.PieceState> allPieces = new HashMap<>(currentState.getPieces());
+        Map<Character, GameState.PieceState> allPieces =
+            new HashMap<>(currentState.getPieces());
         GameState.PieceState primaryState = currentState.getPrimaryPieceState();
         char primaryLabel = primaryState.getPiece().getLabel();
         allPieces.put(primaryLabel, primaryState);
-        
+
         // For each piece, try all possible sliding moves
-        for (Map.Entry<Character, GameState.PieceState> entry : allPieces.entrySet()) {
+        for (Map.Entry<Character, GameState.PieceState> entry :
+            allPieces.entrySet()) {
             char label = entry.getKey();
             GameState.PieceState pieceState = entry.getValue();
             Piece piece = pieceState.getPiece();
             int currentX = pieceState.getX();
             int currentY = pieceState.getY();
-            
+
             if (piece.isHorizontal()) {
                 // Try all horizontal positions
                 // Move left until blocked
                 for (int x = currentX - 1; x >= 0; x--) {
                     if (wouldCollide(currentState, label, x, currentY)) {
-                        break;  // Stop if collision detected
+                        break; // Stop if collision detected
                     }
-                    GameState newState = createNewStateWithMovedPiece(currentState, label, x, currentY);
-                    String moveDesc = "Move " + label + " left to (" + x + "," + currentY + ")";
-                    
+                    GameState newState = createNewStateWithMovedPiece(
+                        currentState, label, x, currentY);
+                    String moveDesc =
+                        "Move " + label + " left to (" + x + "," + currentY + ")";
+
                     // Calculate heuristic if provided
                     int heuristicValue = 0;
                     if (heuristic != null) {
                         heuristicValue = heuristic.calculate(newState);
                     }
-                    
+
                     // Create new node with updated cost and heuristic
-                    Node successor = new Node(
-                        newState, 
-                        currentNode, 
-                        currentNode.getCost() + 1,  // Increment cost by 1
-                        heuristicValue,
-                        moveDesc
-                    );
+                    Node successor = new Node(newState, currentNode,
+                        currentNode.getCost() + 1, // Increment cost by 1
+                        heuristicValue, moveDesc);
                     successors.add(successor);
                 }
-                
+
                 // Move right until blocked
                 Board board = currentState.getBoard();
                 int boardWidth = board.getGrid()[0].length;
                 int maxX = boardWidth - piece.getSize();
                 for (int x = currentX + 1; x <= maxX; x++) {
                     if (wouldCollide(currentState, label, x, currentY)) {
-                        break;  // Stop if collision detected
+                        break; // Stop if collision detected
                     }
-                    GameState newState = createNewStateWithMovedPiece(currentState, label, x, currentY);
-                    String moveDesc = "Move " + label + " right to (" + x + "," + currentY + ")";
-                    
+                    GameState newState = createNewStateWithMovedPiece(
+                        currentState, label, x, currentY);
+                    String moveDesc =
+                        "Move " + label + " right to (" + x + "," + currentY + ")";
+
                     // Calculate heuristic if provided
                     int heuristicValue = 0;
                     if (heuristic != null) {
                         heuristicValue = heuristic.calculate(newState);
                     }
-                    
+
                     // Create new node with updated cost and heuristic
-                    Node successor = new Node(
-                        newState, 
-                        currentNode, 
-                        currentNode.getCost() + 1,  // Increment cost by 1
-                        heuristicValue,
-                        moveDesc
-                    );
+                    Node successor = new Node(newState, currentNode,
+                        currentNode.getCost() + 1, // Increment cost by 1
+                        heuristicValue, moveDesc);
                     successors.add(successor);
                 }
             } else {
@@ -434,61 +431,57 @@ public class GameLogic {
                 // Move up until blocked
                 for (int y = currentY - 1; y >= 0; y--) {
                     if (wouldCollide(currentState, label, currentX, y)) {
-                        break;  // Stop if collision detected
+                        break; // Stop if collision detected
                     }
-                    GameState newState = createNewStateWithMovedPiece(currentState, label, currentX, y);
-                    String moveDesc = "Move " + label + " up to (" + currentX + "," + y + ")";
-                    
+                    GameState newState = createNewStateWithMovedPiece(
+                        currentState, label, currentX, y);
+                    String moveDesc =
+                        "Move " + label + " up to (" + currentX + "," + y + ")";
+
                     // Calculate heuristic if provided
                     int heuristicValue = 0;
                     if (heuristic != null) {
                         heuristicValue = heuristic.calculate(newState);
                     }
-                    
+
                     // Create new node with updated cost and heuristic
-                    Node successor = new Node(
-                        newState, 
-                        currentNode, 
-                        currentNode.getCost() + 1,  // Increment cost by 1
-                        heuristicValue,
-                        moveDesc
-                    );
+                    Node successor = new Node(newState, currentNode,
+                        currentNode.getCost() + 1, // Increment cost by 1
+                        heuristicValue, moveDesc);
                     successors.add(successor);
                 }
-                
+
                 // Move down until blocked
                 Board board = currentState.getBoard();
                 int boardHeight = board.getGrid().length;
                 int maxY = boardHeight - piece.getSize();
                 for (int y = currentY + 1; y <= maxY; y++) {
                     if (wouldCollide(currentState, label, currentX, y)) {
-                        break;  // Stop if collision detected
+                        break; // Stop if collision detected
                     }
-                    GameState newState = createNewStateWithMovedPiece(currentState, label, currentX, y);
-                    String moveDesc = "Move " + label + " down to (" + currentX + "," + y + ")";
-                    
+                    GameState newState = createNewStateWithMovedPiece(
+                        currentState, label, currentX, y);
+                    String moveDesc =
+                        "Move " + label + " down to (" + currentX + "," + y + ")";
+
                     // Calculate heuristic if provided
                     int heuristicValue = 0;
                     if (heuristic != null) {
                         heuristicValue = heuristic.calculate(newState);
                     }
-                    
+
                     // Create new node with updated cost and heuristic
-                    Node successor = new Node(
-                        newState, 
-                        currentNode, 
-                        currentNode.getCost() + 1,  // Increment cost by 1
-                        heuristicValue,
-                        moveDesc
-                    );
+                    Node successor = new Node(newState, currentNode,
+                        currentNode.getCost() + 1, // Increment cost by 1
+                        heuristicValue, moveDesc);
                     successors.add(successor);
                 }
             }
         }
-        
+
         return successors;
     }
-    
+
     /**
      * Overloaded version of generateSuccessors that doesn't use a heuristic.
      * This is useful for algorithms like UCS that don't need heuristics.
