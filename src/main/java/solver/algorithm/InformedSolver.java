@@ -1,4 +1,6 @@
-package solver;
+package solver.algorithm;
+
+import solver.heuristic.Heuristic;
 
 /**
  * Abstract base class for informed search algorithms that use heuristics.

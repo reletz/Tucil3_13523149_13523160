@@ -1,6 +1,11 @@
+import java.util.List;
+
 import logic.Board;
 import logic.GameManager;
 import logic.GameState;
+import logic.Node;
+import solver.algorithm.Solver;
+import solver.algorithm.UCSolver;
 
 /**
  * Kelas Main untuk aplikasi Rush Hour Solver.
@@ -30,7 +35,7 @@ public class Main {
             int algorithmChoice = GameManager.showAlgorithmMenu();
             System.out.println("\nMenjalankan algoritma...");
             
-            // TODO: Implement solver runners
+            // Jalankan algoritma yang dipilih
             runSelectedAlgorithm(gameState, algorithmChoice);
             
         } catch (Exception e) {
@@ -42,20 +47,62 @@ public class Main {
     /**
      * Menjalankan algoritma yang dipilih
      */
-    private static void runSelectedAlgorithm(GameState gameState, int choice) {
+    private static void runSelectedAlgorithm(GameState gameState, int choice) {    
+        Solver solver = null;
+
         switch (choice) {
             case 1:
                 System.out.println("Algoritma UCS dipilih");
-                // TODO: Implement UCS
+                solver = new UCSolver();
                 break;
             case 2:
                 System.out.println("Algoritma Greedy Best-First Search dipilih");
                 // TODO: Implement Greedy
-                break;
+                System.out.println("Algoritma belum diimplementasikan");
+                return;
             case 3:
                 System.out.println("Algoritma A* dipilih");
                 // TODO: Implement A*
-                break;
+                System.out.println("Algoritma belum diimplementasikan");
+                return;
+            default:
+                System.out.println("Pilihan tidak valid");
+                return;
+        }
+        
+        // Jalankan solver dan ukur waktu eksekusi
+        long startTime = System.currentTimeMillis();
+        Node solution = solver.solve(gameState);
+        long executionTime = System.currentTimeMillis() - startTime;
+        
+        // Tampilkan hasil
+        if (solution != null) {
+            List<Node> path = solver.getSolutionPath();
+            
+            System.out.println("\n======== SOLUSI DITEMUKAN ========");
+            System.out.println("Jumlah langkah: " + (path.size() - 1));
+            System.out.println("Jumlah simpul yang dibuat: " + solver.getNodesExplored());
+            System.out.println("Waktu eksekusi: " + solver.getExecutionTimeMs() + " ms");
+            
+            System.out.println("\n======== LANGKAH-LANGKAH ========");
+            for (int i = 0; i < path.size(); i++) {
+                Node node = path.get(i);
+                System.out.println("Langkah " + i + ": " + node.getState());
+                
+                // Opsional: tampilkan papan untuk setiap langkah
+                if (i == 0 || i == path.size() - 1 || i % 5 == 0) { // Tampilkan langkah awal, akhir, dan setiap 5 langkah
+                    node.getState().getBoard().printBoard();
+                    System.out.println();
+                }
+            }
+            
+            // Tampilkan konfigurasi akhir
+            System.out.println("\n======== KONFIGURASI AKHIR ========");
+            solution.getState().getBoard().printBoard();
+        } else {
+            System.out.println("\nTidak ditemukan solusi!");
+            System.out.println("Jumlah simpul yang dibuat: " + solver.getNodesExplored());
+            System.out.println("Waktu eksekusi: " + solver.getExecutionTimeMs() + " ms");
         }
     }
 }
