@@ -19,6 +19,7 @@ import java.awt.GridLayout;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -84,6 +85,8 @@ public class RushHourSolverApp extends JFrame {
     private JButton playPauseButton;
     private JSlider speedSlider;
     private boolean isPlaying = false;
+    private Solver currentSolver;
+    private JButton saveButton;
     
     // Game state and solution data
     private GameState initialGameState;
@@ -345,12 +348,23 @@ public class RushHourSolverApp extends JFrame {
             }
         });
         playPauseButton.setEnabled(false);
+
+        // Save solution button
+        saveButton = new JButton("Save to TXT");
+        saveButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                saveSolutionToFile();
+            }
+        });
+        saveButton.setEnabled(false); // Initially disabled
         
         navigationPanel.add(restartButton);
         navigationPanel.add(prevStepButton);
         navigationPanel.add(playPauseButton);
         navigationPanel.add(nextStepButton);
         navigationPanel.add(stepLabel);
+        navigationPanel.add(saveButton);
         
         // Second row - speed control
         JPanel speedPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -531,7 +545,7 @@ public class RushHourSolverApp extends JFrame {
                 case "Combined":
                     heuristic = new CombinedHeuristic();
                     break;
-                case "Distance to Exit":
+                case "Distance To Exit":
                     heuristic = new DistanceToExitHeuristic();
                     break;
                 case "Piece Density":
@@ -560,6 +574,8 @@ public class RushHourSolverApp extends JFrame {
 
         // Disable UI during solving
         solveButton.setEnabled(false);
+
+        this.currentSolver = solver;
         
         // Run solver in background thread to prevent UI freeze
         new SwingWorker<Node, Void>() {
@@ -598,10 +614,58 @@ public class RushHourSolverApp extends JFrame {
     private void visualizeSolverResults(Solver solver) {
         // Check if we have a solution
         List<Node> path = solver.getSolutionPath();
-        if (path == null || path.isEmpty()) {
+        boolean hasSolution = path != null && !path.isEmpty();
+        
+        // Update statistics display even if no solution found
+        algorithmLabel.setText("Algorithm: " + solver.getAlgorithmName());
+        
+        // Heuristic info
+        if (solver instanceof UCSolver) {
+            heuristicLabel.setText("Heuristic: None");
+        } else if (solver instanceof InformedSolver) {
+            heuristicLabel.setText("Heuristic: " + ((InformedSolver)solver).getHeuristic().getName());
+        } else {
+            heuristicLabel.setText("Heuristic: Unknown");
+        }
+        
+        // Always show nodes explored and time statistics
+        nodesVisitedLabel.setText("Nodes visited: " + solver.getNodesExplored());
+        maxFrontierLabel.setText("Max frontier size: " + solver.getMaxQueueSize());
+        searchTimeLabel.setText("Search time: " + solver.getExecutionTimeMs() + "ms");
+        
+        // Solution length only shown if solution exists
+        solutionLengthLabel.setText("Solution length: " + (hasSolution ? (path.size() - 1) + " moves" : "No solution"));
+        
+        if (!hasSolution) {
+            // Show message dialog
             JOptionPane.showMessageDialog(this,
                 "No solution found! Explored " + solver.getNodesExplored() + " nodes.",
                 "No Solution", JOptionPane.INFORMATION_MESSAGE);
+            
+            // Set status and disable controls
+            statusLabel.setText("No solution found. Explored " + solver.getNodesExplored() + " nodes.");
+            prevStepButton.setEnabled(false);
+            nextStepButton.setEnabled(false);
+            playPauseButton.setEnabled(false);
+            restartButton.setEnabled(false);
+            saveButton.setEnabled(false);
+            saveButton.setEnabled(true);
+            
+            // Show at least the initial state
+            solutionSteps = new ArrayList<>();
+            GameState initialState = initialGameState;
+            if (initialState != null) {
+                GameLogic.updateBoardGrid(initialState);
+                char[][] grid = initialState.getBoard().getGrid();
+                List<String> boardLines = new ArrayList<>();
+                for (char[] row : grid) {
+                    boardLines.add(new String(row));
+                }
+                solutionSteps.add(boardLines);
+                currentStepIndex = 0;
+                updateVisualization();
+            }
+            
             return;
         }
         
@@ -627,27 +691,16 @@ public class RushHourSolverApp extends JFrame {
                 solutionSteps.add(boardLines);
             }
             
-            // Update statistics display
-            algorithmLabel.setText("Algorithm: " + solver.getClass().getSimpleName());
-            heuristicLabel.setText("Heuristic: " + 
-                (solver instanceof UCSolver ? "None" : 
-                (solver instanceof InformedSolver ? 
-                ((InformedSolver)solver).getHeuristic().getName() : "Unknown")));
-            heuristicLabel.setText("Heuristic: None");
-            solutionLengthLabel.setText("Solution length: " + (path.size() - 1) + " moves");
-            nodesVisitedLabel.setText("Nodes visited: " + solver.getNodesExplored());
-            maxFrontierLabel.setText("Max frontier size: " + solver.getMaxQueueSize());
-            searchTimeLabel.setText("Search time: " + solver.getExecutionTimeMs() + "ms");
-            
             // Show first step
             currentStepIndex = 0;
             updateVisualization();
             
-            // Enable navigation buttons
+            // Enable navigation buttons - only if we have steps
             prevStepButton.setEnabled(false);
             nextStepButton.setEnabled(solutionSteps.size() > 1);
             playPauseButton.setEnabled(solutionSteps.size() > 1);
             restartButton.setEnabled(false);
+            saveButton.setEnabled(true);
             
             statusLabel.setText("Solution found: " + solutionSteps.size() + " steps");
             
@@ -858,6 +911,159 @@ public class RushHourSolverApp extends JFrame {
         public JTextField(int columns) {
             super(columns);
         }
+    }
+
+    /**
+     * Saves the complete solution to a text file
+     */
+    private void saveSolutionToFile() {
+        // Let the user save even when there's no solution - just to save the statistics
+        if (currentSolver == null) {
+            JOptionPane.showMessageDialog(this,
+                "No solver results available to save.", 
+                "Save Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        // Additional check to make sure we have at least the initial state
+        if (solutionSteps == null || solutionSteps.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                "No board state available to save.",
+                "Save Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Save Solution Report");
+        fileChooser.setSelectedFile(new File("rush_hour_solution.txt"));
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Text Files", "txt"));
+        
+        int result = fileChooser.showSaveDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            
+            // Add .txt extension if missing
+            if (!file.getName().toLowerCase().endsWith(".txt")) {
+                file = new File(file.getAbsolutePath() + ".txt");
+            }
+            
+            try (FileWriter writer = new FileWriter(file)) {
+                // Write the solution report
+                writer.write(generateSolutionReport());
+                
+                JOptionPane.showMessageDialog(this,
+                    "Solution saved to: " + file.getAbsolutePath(),
+                    "Save Successful", JOptionPane.INFORMATION_MESSAGE);
+                    
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this,
+                    "Error saving solution: " + e.getMessage(),
+                    "Save Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Generates the complete solution report text
+     */
+    private String generateSolutionReport() {
+        StringBuilder report = new StringBuilder();
+        
+        // Header
+        report.append("Rush Hour Puzzle Solution\n");
+        report.append("=========================\n\n");
+        
+        // Board information
+        if (initialGameState != null) {
+            Board board = initialGameState.getBoard();
+            report.append("Board size: ").append(board.getGrid().length).append("x")
+                .append(board.getGrid()[0].length).append("\n");
+            
+            // Exit information
+            int exitX = board.getOutCoordX();
+            int exitY = board.getOutCoordY();
+            int exitSide = board.getExitSide();
+            
+            report.append("Exit position: (").append(exitX).append(",").append(exitY).append(")\n");
+            report.append("Exit side: ");
+            switch (exitSide) {
+                case 0: report.append("Top\n"); break;
+                case 1: report.append("Right\n"); break;
+                case 2: report.append("Bottom\n"); break;
+                case 3: report.append("Left\n"); break;
+                default: report.append("Unknown\n");
+            }
+            report.append("\n");
+        }
+        
+        // Algorithm info
+        report.append("Algorithm: ").append(
+            currentSolver.getAlgorithmName()
+        ).append("\n");
+        
+        // Heuristic info
+        if (currentSolver instanceof UCSolver) {
+            report.append("Heuristic: None\n");
+        } else if (currentSolver instanceof InformedSolver) {
+            report.append("Heuristic: ")
+                .append(((InformedSolver)currentSolver).getHeuristic().getName())
+                .append("\n");
+        }
+        
+        // Statistics
+        List<Node> path = currentSolver.getSolutionPath();
+        boolean hasSolution = path != null && !path.isEmpty();
+        
+        report.append("Solution: ").append(hasSolution ? "Found" : "Not found").append("\n");
+        if (hasSolution) {
+            report.append("Solution length: ").append(path.size() - 1).append(" moves\n");
+        }
+        report.append("Nodes visited: ").append(currentSolver.getNodesExplored()).append("\n");
+        report.append("Maximum frontier size: ").append(currentSolver.getMaxQueueSize()).append("\n");
+        report.append("Execution time: ").append(currentSolver.getExecutionTimeMs()).append(" ms\n\n");
+        
+        // Solution steps (only if we have a solution)
+        if (hasSolution) {
+            report.append("Solution Steps\n");
+            report.append("=============\n\n");
+            
+            // Get move descriptions and board states
+            for (int i = 0; i < path.size(); i++) {
+                Node node = path.get(i);
+                report.append("Step ").append(i).append(": ");
+                
+                // Add move description
+                if (i > 0 && node.getMoveMade() != null) {
+                    report.append(node.getMoveMade());
+                } else if (i == 0) {
+                    report.append("Initial state");
+                } else {
+                    report.append("Move to next state");
+                }
+                report.append("\n\n");
+                
+                // Add board representation
+                if (i < solutionSteps.size()) {
+                    List<String> boardLines = solutionSteps.get(i);
+                    for (String line : boardLines) {
+                        report.append(line).append("\n");
+                    }
+                    report.append("\n");
+                }
+            }
+        } else {
+            report.append("No solution found.\n");
+            if (!solutionSteps.isEmpty()) {
+                report.append("Initial state:\n\n");
+                List<String> boardLines = solutionSteps.get(0);
+                for (String line : boardLines) {
+                    report.append(line).append("\n");
+                }
+            }
+        }
+        
+        return report.toString();
     }
     
     public static void main(String[] args) {
