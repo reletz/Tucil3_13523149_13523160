@@ -1,0 +1,128 @@
+Rush Hour Puzzle Solution
+=========================
+
+Board size: 7x9
+Exit position: (8,-1)
+Exit side: Top
+
+Algorithm: A* Search
+Heuristic: Combined Heuristic
+Solution: Found
+Solution length: 9 moves
+Nodes visited: 149
+Maximum frontier size: 1731
+Execution time: 16 ms
+
+Solution Steps
+=============
+
+Step 0: Initial state
+
+        K
+..AAABBBB
+.......CC
+D...E..FF
+D...E.GGG
+D..HIIJJJ
+LM.H..NOP
+LMQQQQNOP
+
+Step 1: Move F left to (5,2)
+
+        K
+..AAABBBB
+.......CC
+D...EFF..
+D...E.GGG
+D..HIIJJJ
+LM.H..NOP
+LMQQQQNOP
+
+Step 2: Move C left to (5,1)
+
+        K
+..AAABBBB
+.....CC..
+D...EFF..
+D...E.GGG
+D..HIIJJJ
+LM.H..NOP
+LMQQQQNOP
+
+Step 3: Move G left to (5,3)
+
+        K
+..AAABBBB
+.....CC..
+D...EFF..
+D...EGGG.
+D..HIIJJJ
+LM.H..NOP
+LMQQQQNOP
+
+Step 4: Move A left to (0,0)
+
+        K
+AAA..BBBB
+.....CC..
+D...EFF..
+D...EGGG.
+D..HIIJJJ
+LM.H..NOP
+LMQQQQNOP
+
+Step 5: Move B left to (3,0)
+
+        K
+AAABBBB..
+.....CC..
+D...EFF..
+D...EGGG.
+D..HIIJJJ
+LM.H..NOP
+LMQQQQNOP
+
+Step 6: Move H up to (3,2)
+
+        K
+AAABBBB..
+.....CC..
+D..HEFF..
+D..HEGGG.
+D...IIJJJ
+LM....NOP
+LMQQQQNOP
+
+Step 7: Move I left to (2,4)
+
+        K
+AAABBBB..
+.....CC..
+D..HEFF..
+D..HEGGG.
+D.II..JJJ
+LM....NOP
+LMQQQQNOP
+
+Step 8: Move J left to (4,4)
+
+        K
+AAABBBB..
+.....CC..
+D..HEFF..
+D..HEGGG.
+D.IIJJJ..
+LM....NOP
+LMQQQQNOP
+
+Step 9: Move P up to (8,0)
+
+        K
+AAABBBB.P
+.....CC.P
+D..HEFF..
+D..HEGGG.
+D.IIJJJ..
+LM....NO.
+LMQQQQNO.
+

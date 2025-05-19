@@ -1,0 +1,72 @@
+Rush Hour Puzzle Solution
+=========================
+
+Board size: 6x6
+Exit position: (6,2)
+Exit side: Right
+
+Algorithm: Branch and Bound
+Heuristic: Manhattan Distance
+Solution: Found
+Solution length: 5 moves
+Nodes visited: 2324
+Maximum frontier size: 1028
+Execution time: 148 ms
+
+Solution Steps
+=============
+
+Step 0: Initial state
+
+AAB..F
+..BCDF
+GPPCDFK
+GH.III
+GHJ...
+LLJMM.
+
+Step 1: Move C up to (3,0)
+
+AABC.F
+..BCDF
+GPP.DFK
+GH.III
+GHJ...
+LLJMM.
+
+Step 2: Move D up to (4,0)
+
+AABCDF
+..BCDF
+GPP..FK
+GH.III
+GHJ...
+LLJMM.
+
+Step 3: Move I left to (2,3)
+
+AABCDF
+..BCDF
+GPP..FK
+GHIII.
+GHJ...
+LLJMM.
+
+Step 4: Move F down to (5,3)
+
+AABCD.
+..BCD.
+GPP...K
+GHIIIF
+GHJ..F
+LLJMMF
+
+Step 5: Move P right to (4,2)
+
+AABCD.
+..BCD.
+G...PPK
+GHIIIF
+GHJ..F
+LLJMMF
+

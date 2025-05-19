@@ -1023,7 +1023,11 @@ public class RushHourSolverApp extends JFrame {
         report.append("Maximum frontier size: ").append(currentSolver.getMaxQueueSize()).append("\n");
         report.append("Execution time: ").append(currentSolver.getExecutionTimeMs()).append(" ms\n\n");
         
-        // Solution steps (only if we have a solution)
+        int exitX = initialGameState.getBoard().getOutCoordX();
+        int exitY = initialGameState.getBoard().getOutCoordY();
+        int exitSide = initialGameState.getBoard().getExitSide();
+        char exitMarker = 'K';
+        
         if (hasSolution) {
             report.append("Solution Steps\n");
             report.append("=============\n\n");
@@ -1043,10 +1047,75 @@ public class RushHourSolverApp extends JFrame {
                 }
                 report.append("\n\n");
                 
-                // Add board representation
+                // Add board representation with exit marker
                 if (i < solutionSteps.size()) {
-                    List<String> boardLines = solutionSteps.get(i);
-                    for (String line : boardLines) {
+                    List<String> boardLines = new ArrayList<>();
+                    int rows = solutionSteps.get(i).size();
+                    int cols = 0;
+                    
+                    // Determine max column width and copy board lines
+                    for (String line : solutionSteps.get(i)) {
+                        cols = Math.max(cols, line.length());
+                        boardLines.add(line);
+                    }
+                    
+                    // Pad all lines to the same length
+                    for (int lineIdx = 0; lineIdx < boardLines.size(); lineIdx++) {
+                        String line = boardLines.get(lineIdx);
+                        if (line.length() < cols) {
+                            boardLines.set(lineIdx, line + " ".repeat(cols - line.length()));
+                        }
+                    }
+                    
+                    // Create a new board with exit marker
+                    List<String> finalBoard = new ArrayList<>();
+                    
+                    // Handle top exit
+                    if (exitSide == 0) {
+                        // Add a row with the exit marker
+                        StringBuilder topExitLine = new StringBuilder(" ".repeat(cols));
+                        if (exitX >= 0 && exitX < cols) {
+                            topExitLine.setCharAt(exitX, exitMarker);
+                        }
+                        finalBoard.add(topExitLine.toString());
+                    }
+                    
+                    // Add main board rows with side exits if needed
+                    for (int row = 0; row < rows; row++) {
+                        StringBuilder newLine = new StringBuilder();
+                        
+                        // Add left exit if needed or space for alignment
+                        if (exitSide == 3) {
+                            if (row == exitY) {
+                                newLine.append(exitMarker);
+                            } else {
+                                newLine.append(" "); // Add space for rows without exit
+                            }
+                        }
+                        
+                        // Add the board line
+                        newLine.append(boardLines.get(row));
+                        
+                        // Add right exit if needed
+                        if (exitSide == 1 && row == exitY) {
+                            newLine.append(exitMarker);
+                        }
+                        
+                        finalBoard.add(newLine.toString());
+                    }
+                    
+                    // Handle bottom exit
+                    if (exitSide == 2) {
+                        // Add a row with the exit marker
+                        StringBuilder bottomExitLine = new StringBuilder(" ".repeat(cols));
+                        if (exitX >= 0 && exitX < cols) {
+                            bottomExitLine.setCharAt(exitX, exitMarker);
+                        }
+                        finalBoard.add(bottomExitLine.toString());
+                    }
+                    
+                    // Print the final board
+                    for (String line : finalBoard) {
                         report.append(line).append("\n");
                     }
                     report.append("\n");
@@ -1056,8 +1125,72 @@ public class RushHourSolverApp extends JFrame {
             report.append("No solution found.\n");
             if (!solutionSteps.isEmpty()) {
                 report.append("Initial state:\n\n");
-                List<String> boardLines = solutionSteps.get(0);
+                
+                // Use the same formatting for the initial state when no solution
+                List<String> boardLines = new ArrayList<>(solutionSteps.get(0));
+                int rows = boardLines.size();
+                int cols = 0;
+                
+                // Determine max column width
                 for (String line : boardLines) {
+                    cols = Math.max(cols, line.length());
+                }
+                
+                // Pad all lines to the same length
+                for (int lineIdx = 0; lineIdx < boardLines.size(); lineIdx++) {
+                    String line = boardLines.get(lineIdx);
+                    if (line.length() < cols) {
+                        boardLines.set(lineIdx, line + " ".repeat(cols - line.length()));
+                    }
+                }
+                
+                // Create a new board with exit marker
+                List<String> finalBoard = new ArrayList<>();
+                
+                // Handle top exit
+                if (exitSide == 0) {
+                    StringBuilder topExitLine = new StringBuilder(" ".repeat(cols));
+                    if (exitX >= 0 && exitX < cols) {
+                        topExitLine.setCharAt(exitX, exitMarker);
+                    }
+                    finalBoard.add(topExitLine.toString());
+                }
+                
+                // Add main board rows with side exits if needed
+                for (int row = 0; row < rows; row++) {
+                    StringBuilder newLine = new StringBuilder();
+                    
+                    // Add left exit if needed or space for alignment
+                    if (exitSide == 3) {
+                        if (row == exitY) {
+                            newLine.append(exitMarker);
+                        } else {
+                            newLine.append(" "); // Add space for rows without exit
+                        }
+                    }
+                    
+                    // Add the board line
+                    newLine.append(boardLines.get(row));
+                    
+                    // Add right exit if needed
+                    if (exitSide == 1 && row == exitY) {
+                        newLine.append(exitMarker);
+                    }
+                    
+                    finalBoard.add(newLine.toString());
+                }
+                
+                // Handle bottom exit
+                if (exitSide == 2) {
+                    StringBuilder bottomExitLine = new StringBuilder(" ".repeat(cols));
+                    if (exitX >= 0 && exitX < cols) {
+                        bottomExitLine.setCharAt(exitX, exitMarker);
+                    }
+                    finalBoard.add(bottomExitLine.toString());
+                }
+                
+                // Print the final board
+                for (String line : finalBoard) {
                     report.append(line).append("\n");
                 }
             }
