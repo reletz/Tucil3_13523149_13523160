@@ -1,6 +1,8 @@
 package logic;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -222,8 +224,28 @@ public class GameLogic {
      */
     private static GameState createNewStateWithMovedPiece(
         GameState gameState, char pieceLabel, int newX, int newY) {
-        // Create copies of all components to avoid modifying the original state
-        Board boardCopy = gameState.getBoard(); // Board is immutable
+        Board originalBoard = gameState.getBoard();
+        char[][] originalGrid = originalBoard.getGrid();
+        
+        // Create a new grid with the same dimensions
+        int rows = originalGrid.length;
+        int cols = originalGrid[0].length;
+        char[][] newGrid = new char[rows][cols];
+        
+        // Copy grid values
+        for (int i = 0; i < rows; i++) {
+            System.arraycopy(originalGrid[i], 0, newGrid[i], 0, cols);
+        }
+        
+        // Create a new board with the copied grid
+        Board boardCopy = new Board(
+            rows, 
+            cols, 
+            originalBoard.getOutCoordX(),
+            originalBoard.getOutCoordY(),
+            originalBoard.getExitSide()
+        );
+    
 
         // Copy all pieces
         Map<Character, GameState.PieceState> piecesCopy = new HashMap<>();
@@ -273,8 +295,12 @@ public class GameLogic {
                     originalPiece.copy(), primaryPS.getX(), primaryPS.getY());
             }
         }
+        GameState newState = new GameState(boardCopy, piecesCopy, primaryPSCopy);
+    
+        // Update the board grid to reflect the new piece positions
+        updateBoardGrid(newState);
 
-        return new GameState(boardCopy, piecesCopy, primaryPSCopy);
+        return newState;
     }
 
     private static void placePieceOnGrid(
@@ -304,13 +330,12 @@ public class GameLogic {
     }
 
     public static void updateBoardGrid(GameState gameState) {
-        Board board = gameState.getBoard();
-        char[][] grid = board.getGrid();
+        char[][] grid = gameState.getBoard().getGrid();
 
         // Clear the grid
         for (char[] row : grid) {
             for (int j = 0; j < row.length; j++) {
-                row[j] = ' ';
+                row[j] = '.';
             }
         }
 
@@ -321,5 +346,157 @@ public class GameLogic {
         for (GameState.PieceState ps : gameState.getPieces().values()) {
             placePieceOnGrid(grid, ps);
         }
+    }
+
+        /**
+     * Generates all possible successor nodes from the current game state.
+     * This method tries moving each piece in all valid directions and creates
+     * Node objects for each valid move.
+     *
+     * @param currentNode The current node containing game state
+     * @param heuristic The heuristic function to use (can be null for UCS)
+     * @return List of successor nodes
+     */
+    public static List<Node> generateSuccessors(Node currentNode, solver.heuristic.Heuristic heuristic) {
+        List<Node> successors = new ArrayList<>();
+        GameState currentState = currentNode.getState();
+        
+        // Get all pieces including the primary piece
+        Map<Character, GameState.PieceState> allPieces = new HashMap<>(currentState.getPieces());
+        GameState.PieceState primaryState = currentState.getPrimaryPieceState();
+        char primaryLabel = primaryState.getPiece().getLabel();
+        allPieces.put(primaryLabel, primaryState);
+        
+        // For each piece, try all possible sliding moves
+        for (Map.Entry<Character, GameState.PieceState> entry : allPieces.entrySet()) {
+            char label = entry.getKey();
+            GameState.PieceState pieceState = entry.getValue();
+            Piece piece = pieceState.getPiece();
+            int currentX = pieceState.getX();
+            int currentY = pieceState.getY();
+            
+            if (piece.isHorizontal()) {
+                // Try all horizontal positions
+                // Move left until blocked
+                for (int x = currentX - 1; x >= 0; x--) {
+                    if (wouldCollide(currentState, label, x, currentY)) {
+                        break;  // Stop if collision detected
+                    }
+                    GameState newState = createNewStateWithMovedPiece(currentState, label, x, currentY);
+                    String moveDesc = "Move " + label + " left to (" + x + "," + currentY + ")";
+                    
+                    // Calculate heuristic if provided
+                    int heuristicValue = 0;
+                    if (heuristic != null) {
+                        heuristicValue = heuristic.calculate(newState);
+                    }
+                    
+                    // Create new node with updated cost and heuristic
+                    Node successor = new Node(
+                        newState, 
+                        currentNode, 
+                        currentNode.getCost() + 1,  // Increment cost by 1
+                        heuristicValue,
+                        moveDesc
+                    );
+                    successors.add(successor);
+                }
+                
+                // Move right until blocked
+                Board board = currentState.getBoard();
+                int boardWidth = board.getGrid()[0].length;
+                int maxX = boardWidth - piece.getSize();
+                for (int x = currentX + 1; x <= maxX; x++) {
+                    if (wouldCollide(currentState, label, x, currentY)) {
+                        break;  // Stop if collision detected
+                    }
+                    GameState newState = createNewStateWithMovedPiece(currentState, label, x, currentY);
+                    String moveDesc = "Move " + label + " right to (" + x + "," + currentY + ")";
+                    
+                    // Calculate heuristic if provided
+                    int heuristicValue = 0;
+                    if (heuristic != null) {
+                        heuristicValue = heuristic.calculate(newState);
+                    }
+                    
+                    // Create new node with updated cost and heuristic
+                    Node successor = new Node(
+                        newState, 
+                        currentNode, 
+                        currentNode.getCost() + 1,  // Increment cost by 1
+                        heuristicValue,
+                        moveDesc
+                    );
+                    successors.add(successor);
+                }
+            } else {
+                // Try all vertical positions
+                // Move up until blocked
+                for (int y = currentY - 1; y >= 0; y--) {
+                    if (wouldCollide(currentState, label, currentX, y)) {
+                        break;  // Stop if collision detected
+                    }
+                    GameState newState = createNewStateWithMovedPiece(currentState, label, currentX, y);
+                    String moveDesc = "Move " + label + " up to (" + currentX + "," + y + ")";
+                    
+                    // Calculate heuristic if provided
+                    int heuristicValue = 0;
+                    if (heuristic != null) {
+                        heuristicValue = heuristic.calculate(newState);
+                    }
+                    
+                    // Create new node with updated cost and heuristic
+                    Node successor = new Node(
+                        newState, 
+                        currentNode, 
+                        currentNode.getCost() + 1,  // Increment cost by 1
+                        heuristicValue,
+                        moveDesc
+                    );
+                    successors.add(successor);
+                }
+                
+                // Move down until blocked
+                Board board = currentState.getBoard();
+                int boardHeight = board.getGrid().length;
+                int maxY = boardHeight - piece.getSize();
+                for (int y = currentY + 1; y <= maxY; y++) {
+                    if (wouldCollide(currentState, label, currentX, y)) {
+                        break;  // Stop if collision detected
+                    }
+                    GameState newState = createNewStateWithMovedPiece(currentState, label, currentX, y);
+                    String moveDesc = "Move " + label + " down to (" + currentX + "," + y + ")";
+                    
+                    // Calculate heuristic if provided
+                    int heuristicValue = 0;
+                    if (heuristic != null) {
+                        heuristicValue = heuristic.calculate(newState);
+                    }
+                    
+                    // Create new node with updated cost and heuristic
+                    Node successor = new Node(
+                        newState, 
+                        currentNode, 
+                        currentNode.getCost() + 1,  // Increment cost by 1
+                        heuristicValue,
+                        moveDesc
+                    );
+                    successors.add(successor);
+                }
+            }
+        }
+        
+        return successors;
+    }
+    
+    /**
+     * Overloaded version of generateSuccessors that doesn't use a heuristic.
+     * This is useful for algorithms like UCS that don't need heuristics.
+     *
+     * @param currentNode The current node containing game state
+     * @return List of successor nodes
+     */
+    public static List<Node> generateSuccessors(Node currentNode) {
+        return generateSuccessors(currentNode, null);
     }
 }

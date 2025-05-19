@@ -259,11 +259,11 @@ public class GameState {
         int primaryX = primaryPieceState.getX();
         int primaryY = primaryPieceState.getY();
         
-        // Debug output when checking goal state
-        System.out.println("Checking goal: Primary at (" + primaryX + "," + primaryY + 
-                        "), size=" + primaryPiece.getSize() + 
-                        ", Exit at (" + exitX + "," + exitY + 
-                        "), Exit side=" + exitSide);
+        // // Debug output when checking goal state
+        // System.out.println("Checking goal: Primary at (" + primaryX + "," + primaryY + 
+        //                 "), size=" + primaryPiece.getSize() + 
+        //                 ", Exit at (" + exitX + "," + exitY + 
+        //                 "), Exit side=" + exitSide);
         
         // Check based on exit side
         switch (exitSide) {
@@ -271,8 +271,8 @@ public class GameState {
                 // Primary piece must be vertical and its top edge at y=0
                 if (!primaryPiece.isHorizontal()) {
                     boolean isGoal = (primaryX == exitX) && (primaryY <= 0);
-                    System.out.println("Top exit check: primary at (" + primaryX + "," + primaryY + 
-                                "), goal=" + isGoal);
+                    // System.out.println("Top exit check: primary at (" + primaryX + "," + primaryY + 
+                    //             "), goal=" + isGoal);
                     return isGoal;
                 }
                 return false;
