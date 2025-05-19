@@ -87,13 +87,9 @@ public class Main {
             System.out.println("\n======== LANGKAH-LANGKAH ========");
             for (int i = 0; i < path.size(); i++) {
                 Node node = path.get(i);
-                System.out.println("Langkah " + i + ": " + node.getState());
-                
-                // Opsional: tampilkan papan untuk setiap langkah
-                if (i == 0 || i == path.size() - 1 || i % 5 == 0) { // Tampilkan langkah awal, akhir, dan setiap 5 langkah
-                    node.getState().getBoard().printBoard();
-                    System.out.println();
-                }
+                System.out.println("Langkah " + i + ": ");
+                node.getState().getBoard().printBoard();
+                System.out.println();
             }
             
             // Tampilkan konfigurasi akhir
