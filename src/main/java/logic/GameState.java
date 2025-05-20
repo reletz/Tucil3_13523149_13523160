@@ -282,7 +282,6 @@ public class GameState {
                 if (primaryPiece.isHorizontal()) {
                     int rightEdgeX = primaryX + primaryPiece.getSize() - 1;
                     boolean isGoal = (rightEdgeX >= board.getGrid()[0].length - 1) && (primaryY == exitY);
-                    System.out.println("Right exit check: right edge at " + rightEdgeX + ", goal=" + isGoal);
                     return isGoal;
                 }
                 return false;
@@ -292,7 +291,6 @@ public class GameState {
                 if (!primaryPiece.isHorizontal()) {
                     int bottomEdgeY = primaryY + primaryPiece.getSize() - 1;
                     boolean isGoal = (primaryX == exitX) && (bottomEdgeY >= board.getGrid().length - 1);
-                    System.out.println("Bottom exit check: bottom edge at " + bottomEdgeY + ", goal=" + isGoal);
                     return isGoal;
                 }
                 return false;
@@ -301,13 +299,11 @@ public class GameState {
                 // Primary piece must be horizontal and its left edge at x=0 or negative
                 if (primaryPiece.isHorizontal()) {
                     boolean isGoal = (primaryX <= 0) && (primaryY == exitY);
-                    System.out.println("Left exit check: left edge at " + primaryX + ", goal=" + isGoal);
                     return isGoal;
                 }
                 return false;
                 
             default:
-                System.out.println("Invalid exit side: " + exitSide);
                 return false;
         }
     }

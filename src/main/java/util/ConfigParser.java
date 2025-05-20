@@ -30,17 +30,17 @@ public class ConfigParser {
     
     try {
       // Print file content for debugging
-      System.out.println("File content:");
+      // System.out.println("File content:");
       List<String> allLines = new ArrayList<>();
       String line;
       while ((line = reader.readLine()) != null) {
         allLines.add(line);
-        System.out.println("[" + line + "]");
+        // System.out.println("[" + line + "]");
       }
       reader.close();
       
       if (allLines.size() < 3) {
-        throw new IOException("File konfigurasi tidak lengkap");
+        throw new IOException("Incomplete config file");
       }
       
       // Baca dimensi papan
@@ -48,16 +48,21 @@ public class ConfigParser {
       int rows = Integer.parseInt(dimensions[0]);
       int cols = Integer.parseInt(dimensions[1]);
       
-      // Print dimensions for debugging
-      System.out.println("Board dimensions: " + rows + "x" + cols);
+      if (rows <= 1 || cols <= 1){
+        throw new IOException("Board dimension must be greater than 2!");
+      }
       
       // Baca jumlah Block biasa
       int nonPrimaryPieceCount = Integer.parseInt(allLines.get(1).trim());
+
+      if (nonPrimaryPieceCount < 0){
+        throw new IOException("The nonPrimary block cannot be negative!");
+      }
       
       // Collect all content lines (skip header lines)
       List<String> contentLines = new ArrayList<>();
       for (int i = 2; i < allLines.size(); i++) {
-        contentLines.add(allLines.get(i));
+        contentLines.add(allLines.get(i).toUpperCase());
       }
       
       // Initialize grid with empty spaces
@@ -86,7 +91,6 @@ public class ConfigParser {
         exitX = topLine.indexOf('K');
         exitY = -1;
         exitSide = 0; // Top
-        System.out.println("TOP EXIT found at column " + exitX);
         contentLines.remove(0); // Remove this line so we don't process it as part of the board
       }
       
@@ -97,8 +101,6 @@ public class ConfigParser {
         exitX = bottomLine.indexOf('K');
         exitY = rows;
         exitSide = 2; // Bottom
-        System.out.println("BOTTOM EXIT found at column " + exitX);
-        // We'll skip this line when processing the board
       }
       
       // STEP 2: Process the actual board content
@@ -107,6 +109,51 @@ public class ConfigParser {
       // Take only the rows we need for the board
       for (int i = 0; i < Math.min(rows, contentLines.size()); i++) {
         boardLines.add(contentLines.get(i));
+      }
+
+      // Validation: K must not be in Board (harus di luar grid)
+      boolean leftExitHasSpace = false;
+
+      // Pertama cek apakah baris lain memiliki spasi awalan (untuk left exit)
+      for (int i = 0; i < boardLines.size(); i++) {
+        String rowLine = boardLines.get(i);
+        
+        // Jika baris dimulai dengan spasi, catat
+        if (!rowLine.startsWith(" ")) {
+          leftExitHasSpace = false;
+          break;
+        } else leftExitHasSpace = true;
+      }
+
+      int kCount = 0;
+      for (int i = 0; i < boardLines.size(); i++) {
+        String rowLine = boardLines.get(i);
+        int kIndex = rowLine.indexOf('K');
+        
+        if (kIndex != -1) {
+          kCount++;
+          
+          // K hanya valid di posisi:
+          // - Kolom pertama (indeks 0) HANYA jika akan diproses sebagai left exit DAN baris lain memiliki spasi awalan
+          // - Kolom terakhir (>= cols atau == rowLine.length()-1) HANYA jika akan diproses sebagai right exit
+          boolean isValidLeftExitPosition = (kIndex == 0 && leftExitHasSpace);
+          boolean isValidRightExitPosition = (kIndex >= cols || kIndex == rowLine.length()-1);
+          
+          // K hanya valid di tepi, tidak boleh di dalam papan
+          if (!isValidLeftExitPosition && !isValidRightExitPosition) {
+            throw new IOException("Invalid exit position: Exit marker 'K' must be outside the board. " + 
+                                "Found at row " + (i+1) + ", column " + (kIndex+1) + ".");
+          }
+          
+          // Jika K di posisi left exit, pastikan ini adalah awal baris (tidak ada karakter lain di kiri)
+          if (kIndex == 0 && !leftExitHasSpace) {
+            throw new IOException("Invalid left exit configuration: For left exit, other rows must have " +  "leading spaces to position the exit outside the board.");
+          }
+        }
+      }
+      
+      if (kCount > 1) {
+        throw new IOException("Invalid configuration: Multiple exit markers ('K') found. Only one exit is allowed.");
       }
       
       // STEP 3: Find exits in the board content
@@ -119,7 +166,6 @@ public class ConfigParser {
           exitX = -1;
           exitY = i;
           exitSide = 3; // Left
-          System.out.println("LEFT EXIT found at row " + i);
           
           // Update boardLine to remove K
           boardLines.set(i, rowLine.replaceFirst("K", " "));
@@ -138,7 +184,6 @@ public class ConfigParser {
             exitX = cols;
             exitY = i;
             exitSide = 1; // Right
-            System.out.println("RIGHT EXIT found at row " + i);
             
             // Update boardLine to remove K
             boardLines.set(i, rowLine.substring(0, kIndex));
@@ -177,20 +222,20 @@ public class ConfigParser {
       }
       
       // Print final grid for verification
-      System.out.println("\nFinal grid (without K):");
-      for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-          System.out.print(grid[i][j]);
-        }
-        System.out.println();
-      }
+      // System.out.println("\nFinal grid (without K):");
+      // for (int i = 0; i < rows; i++) {
+      //   for (int j = 0; j < cols; j++) {
+      //     System.out.print(grid[i][j]);
+      //   }
+      //   System.out.println();
+      // }
       
       // Create board with exit information
       Board board = new Board(rows, cols, exitX, exitY, exitSide);
       board.setGrid(grid);
       
       // Debug exit information
-      System.out.println("Exit position: (" + exitX + "," + exitY + "), exit side: " + exitSide);
+      // System.out.println("Exit position: (" + exitX + "," + exitY + "), exit side: " + exitSide);
       
       // Identifikasi dan buat semua Block
       Map<Character, List<int[]>> pieceCoordinates = new HashMap<>();
@@ -207,10 +252,10 @@ public class ConfigParser {
       }
       
       // Debug output
-      System.out.println("\nDetected pieces:");
-      for (Map.Entry<Character, List<int[]>> entry : pieceCoordinates.entrySet()) {
-        System.out.println("Piece " + entry.getKey() + ": " + entry.getValue().size() + " cells");
-      }
+      // System.out.println("\nDetected pieces:");
+      // for (Map.Entry<Character, List<int[]>> entry : pieceCoordinates.entrySet()) {
+      //   System.out.println("Piece " + entry.getKey() + ": " + entry.getValue().size() + " cells");
+      // }
       
       // Prepare for creating GameState with new structure
       List<Piece> pieces = new ArrayList<>();
@@ -224,10 +269,19 @@ public class ConfigParser {
       for (Map.Entry<Character, List<int[]>> entry : pieceCoordinates.entrySet()) {
         char label = entry.getKey();
         List<int[]> coords = entry.getValue();
+
+        // Semua koordinat piece harus terhubung
+        boolean isConnected = validateConnectedPiece(coords);
+        if (!isConnected) {
+          throw new IOException("Found disconnected piece parts with same label '" + label + "'. Each piece must be contiguous.");
+        }
         
         // Determine orientation and size
         boolean isHorizontal;
         int size = coords.size(); // Size is the number of cells
+        if (size < 2) {
+          throw new IOException("Piece length has to be more than 1 block length!");
+        }
         int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE;
         
         // Find top-left corner
@@ -249,11 +303,6 @@ public class ConfigParser {
         
         isHorizontal = sameY;
         
-        // Debug output for each piece
-        System.out.println("Processing piece " + label + ": size=" + size + 
-                          ", isHorizontal=" + isHorizontal + 
-                          ", position=(" + minX + "," + minY + ")");
-        
         // Create piece
         if (label == 'P') {
           primaryPiece = new PrimaryPiece(label, size, isHorizontal);
@@ -266,9 +315,9 @@ public class ConfigParser {
               (!isHorizontal && (exitSide == 0 || exitSide == 2));  // Vertical piece with top/bottom exit
           
           if (!validOrientation) {
-            System.out.println("Warning: Primary piece orientation (" + 
+            throw new IOException("Primary piece orientation (" + 
                               (isHorizontal ? "horizontal" : "vertical") + 
-                              ") may not be compatible with exit side (" + exitSide + ")");
+                              ") is not compatible with exit side (" + exitSide + ")");
           }
         } else {
           Piece piece = new Piece(label, size, isHorizontal);
@@ -286,8 +335,6 @@ public class ConfigParser {
       // Create and return the GameState with the original structure
       return new GameState(board, pieces, positionsX, positionsY, primaryPiece, primaryX, primaryY);
     } catch (Exception e) {
-      System.out.println("Exception details: " + e);
-      e.printStackTrace();
       throw new IOException("Error parsing configuration: " + e.getMessage(), e);
     }
   }
@@ -298,7 +345,7 @@ public class ConfigParser {
   private static boolean isExitLine(String line) {
     if (line == null || line.isEmpty()) return false;
     
-    line = line.trim();
+    line = line.trim().toUpperCase();
     if (line.equals("K")) return true; // Simple case - just "K"
     
     boolean hasK = false;
@@ -308,5 +355,58 @@ public class ConfigParser {
     }
     
     return hasK; // True if it has K and only spaces otherwise
+  }
+
+    /**
+   * Validates that all coordinates for a piece are connected
+   */
+  private static boolean validateConnectedPiece(List<int[]> coords) {
+    if (coords.size() <= 1) return true;
+    
+    // Cek apakah semua koordinat dalam satu garis (horizontal atau vertikal)
+    boolean isHorizontal = true;
+    boolean isVertical = true;
+    int baseY = coords.get(0)[1];
+    int baseX = coords.get(0)[0];
+    
+    for (int[] coord : coords) {
+      if (coord[1] != baseY) {
+        isHorizontal = false;
+      }
+      if (coord[0] != baseX) {
+        isVertical = false;
+      }
+    }
+    
+    // Jika tidak semua dalam satu garis, berarti tidak terhubung
+    if (!isHorizontal && !isVertical) {
+      return false;
+    }
+    
+    // Jika horizontal, semua koordinat X harus berurutan tanpa celah
+    if (isHorizontal) {
+      // Sort by X coordinate
+      coords.sort((a, b) -> Integer.compare(a[0], b[0]));
+      for (int i = 1; i < coords.size(); i++) {
+        if (coords.get(i)[0] != coords.get(i-1)[0] + 1) {
+          return false; // Ada celah
+        }
+      }
+      return true;
+    }
+    
+    // Jika vertical, semua koordinat Y harus berurutan tanpa celah
+    if (isVertical) {
+      // Sort by Y coordinate
+      coords.sort((a, b) -> Integer.compare(a[1], b[1]));
+      for (int i = 1; i < coords.size(); i++) {
+        if (coords.get(i)[1] != coords.get(i-1)[1] + 1) {
+          return false; // Ada celah
+        }
+      }
+      return true;
+    }
+    
+    return false;
   }
 }

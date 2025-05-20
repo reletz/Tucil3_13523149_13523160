@@ -985,7 +985,7 @@ public class RushHourSolverApp extends JFrame {
             int exitY = board.getOutCoordY();
             int exitSide = board.getExitSide();
             
-            report.append("Exit position: (").append(exitX).append(",").append(exitY).append(")\n");
+            report.append("sition: (").append(exitX).append(",").append(exitY).append(")\n");
             report.append("Exit side: ");
             switch (exitSide) {
                 case 0: report.append("Top\n"); break;
