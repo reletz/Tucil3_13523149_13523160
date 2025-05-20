@@ -1,0 +1,540 @@
+Rush Hour Puzzle Solution
+=========================
+
+Board size: 6x6
+Exit position: (6,2)
+Exit side: Right
+
+Algorithm: Greedy Best-First Search
+Heuristic: Manhattan Distance
+Solution: Found
+Solution length: 57 moves
+Nodes visited: 3586
+Maximum frontier size: 2475
+Execution time: 222 ms
+
+Solution Steps
+=============
+
+Step 0: Initial state
+
+AAB..F
+..BCDF
+GPPCDFK
+GH.III
+GHJ...
+LLJMM.
+
+Step 1: Move C up to (3,0)
+
+AABC.F
+..BCDF
+GPP.DFK
+GH.III
+GHJ...
+LLJMM.
+
+Step 2: Move P right to (2,2)
+
+AABC.F
+..BCDF
+G.PPDFK
+GH.III
+GHJ...
+LLJMM.
+
+Step 3: Move I left to (2,3)
+
+AABC.F
+..BCDF
+G.PPDFK
+GHIII.
+GHJ...
+LLJMM.
+
+Step 4: Move F down to (5,2)
+
+AABC..
+..BCD.
+G.PPDFK
+GHIIIF
+GHJ..F
+LLJMM.
+
+Step 5: Move M right to (4,5)
+
+AABC..
+..BCD.
+G.PPDFK
+GHIIIF
+GHJ..F
+LLJ.MM
+
+Step 6: Move H up to (1,1)
+
+AABC..
+.HBCD.
+GHPPDFK
+G.IIIF
+G.J..F
+LLJ.MM
+
+Step 7: Move M left to (3,5)
+
+AABC..
+.HBCD.
+GHPPDFK
+G.IIIF
+G.J..F
+LLJMM.
+
+Step 8: Move I left to (1,3)
+
+AABC..
+.HBCD.
+GHPPDFK
+GIII.F
+G.J..F
+LLJMM.
+
+Step 9: Move M right to (4,5)
+
+AABC..
+.HBCD.
+GHPPDFK
+GIII.F
+G.J..F
+LLJ.MM
+
+Step 10: Move G up to (0,1)
+
+AABC..
+GHBCD.
+GHPPDFK
+GIII.F
+..J..F
+LLJ.MM
+
+Step 11: Move M left to (3,5)
+
+AABC..
+GHBCD.
+GHPPDFK
+GIII.F
+..J..F
+LLJMM.
+
+Step 12: Move I right to (2,3)
+
+AABC..
+GHBCD.
+GHPPDFK
+G.IIIF
+..J..F
+LLJMM.
+
+Step 13: Move M right to (4,5)
+
+AABC..
+GHBCD.
+GHPPDFK
+G.IIIF
+..J..F
+LLJ.MM
+
+Step 14: Move H down to (1,3)
+
+AABC..
+G.BCD.
+G.PPDFK
+GHIIIF
+.HJ..F
+LLJ.MM
+
+Step 15: Move M left to (3,5)
+
+AABC..
+G.BCD.
+G.PPDFK
+GHIIIF
+.HJ..F
+LLJMM.
+
+Step 16: Move H up to (1,2)
+
+AABC..
+G.BCD.
+GHPPDFK
+GHIIIF
+..J..F
+LLJMM.
+
+Step 17: Move D up to (4,0)
+
+AABCD.
+G.BCD.
+GHPP.FK
+GHIIIF
+..J..F
+LLJMM.
+
+Step 18: Move F up to (5,1)
+
+AABCD.
+G.BCDF
+GHPP.FK
+GHIIIF
+..J...
+LLJMM.
+
+Step 19: Move M right to (4,5)
+
+AABCD.
+G.BCDF
+GHPP.FK
+GHIIIF
+..J...
+LLJ.MM
+
+Step 20: Move H down to (1,3)
+
+AABCD.
+G.BCDF
+G.PP.FK
+GHIIIF
+.HJ...
+LLJ.MM
+
+Step 21: Move M left to (3,5)
+
+AABCD.
+G.BCDF
+G.PP.FK
+GHIIIF
+.HJ...
+LLJMM.
+
+Step 22: Move H up to (1,1)
+
+AABCD.
+GHBCDF
+GHPP.FK
+G.IIIF
+..J...
+LLJMM.
+
+Step 23: Move M right to (4,5)
+
+AABCD.
+GHBCDF
+GHPP.FK
+G.IIIF
+..J...
+LLJ.MM
+
+Step 24: Move I left to (1,3)
+
+AABCD.
+GHBCDF
+GHPP.FK
+GIII.F
+..J...
+LLJ.MM
+
+Step 25: Move D down to (4,3)
+
+AABC..
+GHBC.F
+GHPP.FK
+GIIIDF
+..J.D.
+LLJ.MM
+
+Step 26: Move F down to (5,2)
+
+AABC..
+GHBC..
+GHPP.FK
+GIIIDF
+..J.DF
+LLJ.MM
+
+Step 27: Move M left to (3,5)
+
+AABC..
+GHBC..
+GHPP.FK
+GIIIDF
+..J.DF
+LLJMM.
+
+Step 28: Move G down to (0,2)
+
+AABC..
+.HBC..
+GHPP.FK
+GIIIDF
+G.J.DF
+LLJMM.
+
+Step 29: Move M right to (4,5)
+
+AABC..
+.HBC..
+GHPP.FK
+GIIIDF
+G.J.DF
+LLJ.MM
+
+Step 30: Move F up to (5,0)
+
+AABC.F
+.HBC.F
+GHPP.FK
+GIIID.
+G.J.D.
+LLJ.MM
+
+Step 31: Move M left to (3,5)
+
+AABC.F
+.HBC.F
+GHPP.FK
+GIIID.
+G.J.D.
+LLJMM.
+
+Step 32: Move G up to (0,1)
+
+AABC.F
+GHBC.F
+GHPP.FK
+GIIID.
+..J.D.
+LLJMM.
+
+Step 33: Move P right to (3,2)
+
+AABC.F
+GHBC.F
+GH.PPFK
+GIIID.
+..J.D.
+LLJMM.
+
+Step 34: Move M right to (4,5)
+
+AABC.F
+GHBC.F
+GH.PPFK
+GIIID.
+..J.D.
+LLJ.MM
+
+Step 35: Move G down to (0,2)
+
+AABC.F
+.HBC.F
+GH.PPFK
+GIIID.
+G.J.D.
+LLJ.MM
+
+Step 36: Move F down to (5,2)
+
+AABC..
+.HBC..
+GH.PPFK
+GIIIDF
+G.J.DF
+LLJ.MM
+
+Step 37: Move M left to (3,5)
+
+AABC..
+.HBC..
+GH.PPFK
+GIIIDF
+G.J.DF
+LLJMM.
+
+Step 38: Move G up to (0,1)
+
+AABC..
+GHBC..
+GH.PPFK
+GIIIDF
+..J.DF
+LLJMM.
+
+Step 39: Move M right to (4,5)
+
+AABC..
+GHBC..
+GH.PPFK
+GIIIDF
+..J.DF
+LLJ.MM
+
+Step 40: Move B down to (2,1)
+
+AA.C..
+GHBC..
+GHBPPFK
+GIIIDF
+..J.DF
+LLJ.MM
+
+Step 41: Move M left to (3,5)
+
+AA.C..
+GHBC..
+GHBPPFK
+GIIIDF
+..J.DF
+LLJMM.
+
+Step 42: Move G down to (0,2)
+
+AA.C..
+.HBC..
+GHBPPFK
+GIIIDF
+G.J.DF
+LLJMM.
+
+Step 43: Move M right to (4,5)
+
+AA.C..
+.HBC..
+GHBPPFK
+GIIIDF
+G.J.DF
+LLJ.MM
+
+Step 44: Move F up to (5,0)
+
+AA.C.F
+.HBC.F
+GHBPPFK
+GIIID.
+G.J.D.
+LLJ.MM
+
+Step 45: Move G up to (0,1)
+
+AA.C.F
+GHBC.F
+GHBPPFK
+GIIID.
+..J.D.
+LLJ.MM
+
+Step 46: Move A right to (1,0)
+
+.AAC.F
+GHBC.F
+GHBPPFK
+GIIID.
+..J.D.
+LLJ.MM
+
+Step 47: Move G up to (0,0)
+
+GAAC.F
+GHBC.F
+GHBPPFK
+.IIID.
+..J.D.
+LLJ.MM
+
+Step 48: Move M left to (3,5)
+
+GAAC.F
+GHBC.F
+GHBPPFK
+.IIID.
+..J.D.
+LLJMM.
+
+Step 49: Move I left to (0,3)
+
+GAAC.F
+GHBC.F
+GHBPPFK
+III.D.
+..J.D.
+LLJMM.
+
+Step 50: Move M right to (4,5)
+
+GAAC.F
+GHBC.F
+GHBPPFK
+III.D.
+..J.D.
+LLJ.MM
+
+Step 51: Move F down to (5,2)
+
+GAAC..
+GHBC..
+GHBPPFK
+III.DF
+..J.DF
+LLJ.MM
+
+Step 52: Move M left to (3,5)
+
+GAAC..
+GHBC..
+GHBPPFK
+III.DF
+..J.DF
+LLJMM.
+
+Step 53: Move F down to (5,3)
+
+GAAC..
+GHBC..
+GHBPP.K
+III.DF
+..J.DF
+LLJMMF
+
+Step 54: Move I right to (1,3)
+
+GAAC..
+GHBC..
+GHBPP.K
+.IIIDF
+..J.DF
+LLJMMF
+
+Step 55: Move G down to (0,2)
+
+.AAC..
+.HBC..
+GHBPP.K
+GIIIDF
+G.J.DF
+LLJMMF
+
+Step 56: Move G up to (0,1)
+
+.AAC..
+GHBC..
+GHBPP.K
+GIIIDF
+..J.DF
+LLJMMF
+
+Step 57: Move P right to (4,2)
+
+.AAC..
+GHBC..
+GHB.PPK
+GIIIDF
+..J.DF
+LLJMMF
+

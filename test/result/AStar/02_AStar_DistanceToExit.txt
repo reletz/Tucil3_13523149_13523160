@@ -1,0 +1,63 @@
+Rush Hour Puzzle Solution
+=========================
+
+Board size: 6x6
+Exit position: (-1,2)
+Exit side: Left
+
+Algorithm: A* Search
+Heuristic: Distance to Exit
+Solution: Found
+Solution length: 4 moves
+Nodes visited: 81
+Maximum frontier size: 177
+Execution time: 9 ms
+
+Solution Steps
+=============
+
+Step 0: Initial state
+
+ AAB..F
+ ..BCDF
+KGPPCDF
+ GH.III
+ GHJ...
+ LLJMM.
+
+Step 1: Move J up to (2,3)
+
+ AAB..F
+ ..BCDF
+KGPPCDF
+ GHJIII
+ GHJ...
+ LL.MM.
+
+Step 2: Move L right to (1,5)
+
+ AAB..F
+ ..BCDF
+KGPPCDF
+ GHJIII
+ GHJ...
+ .LLMM.
+
+Step 3: Move G down to (0,3)
+
+ AAB..F
+ ..BCDF
+K.PPCDF
+ GHJIII
+ GHJ...
+ GLLMM.
+
+Step 4: Move P left to (0,2)
+
+ AAB..F
+ ..BCDF
+KPP.CDF
+ GHJIII
+ GHJ...
+ GLLMM.
+

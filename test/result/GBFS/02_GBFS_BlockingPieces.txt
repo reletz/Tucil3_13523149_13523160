@@ -1,0 +1,99 @@
+Rush Hour Puzzle Solution
+=========================
+
+Board size: 6x6
+Exit position: (-1,2)
+Exit side: Left
+
+Algorithm: Greedy Best-First Search
+Heuristic: Blocking Pieces
+Solution: Found
+Solution length: 8 moves
+Nodes visited: 14
+Maximum frontier size: 58
+Execution time: 2 ms
+
+Solution Steps
+=============
+
+Step 0: Initial state
+
+ AAB..F
+ ..BCDF
+KGPPCDF
+ GH.III
+ GHJ...
+ LLJMM.
+
+Step 1: Move C up to (3,0)
+
+ AABC.F
+ ..BCDF
+KGPP.DF
+ GH.III
+ GHJ...
+ LLJMM.
+
+Step 2: Move M right to (4,5)
+
+ AABC.F
+ ..BCDF
+KGPP.DF
+ GH.III
+ GHJ...
+ LLJ.MM
+
+Step 3: Move J up to (2,3)
+
+ AABC.F
+ ..BCDF
+KGPP.DF
+ GHJIII
+ GHJ...
+ LL..MM
+
+Step 4: Move M left to (2,5)
+
+ AABC.F
+ ..BCDF
+KGPP.DF
+ GHJIII
+ GHJ...
+ LLMM..
+
+Step 5: Move M right to (3,5)
+
+ AABC.F
+ ..BCDF
+KGPP.DF
+ GHJIII
+ GHJ...
+ LL.MM.
+
+Step 6: Move L right to (1,5)
+
+ AABC.F
+ ..BCDF
+KGPP.DF
+ GHJIII
+ GHJ...
+ .LLMM.
+
+Step 7: Move G down to (0,3)
+
+ AABC.F
+ ..BCDF
+K.PP.DF
+ GHJIII
+ GHJ...
+ GLLMM.
+
+Step 8: Move P left to (0,2)
+
+ AABC.F
+ ..BCDF
+KPP..DF
+ GHJIII
+ GHJ...
+ GLLMM.
+

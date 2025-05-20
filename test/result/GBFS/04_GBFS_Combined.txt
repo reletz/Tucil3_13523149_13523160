@@ -1,0 +1,238 @@
+Rush Hour Puzzle Solution
+=========================
+
+Board size: 7x9
+Exit position: (8,-1)
+Exit side: Top
+
+Algorithm: Greedy Best-First Search
+Heuristic: Combined Heuristic
+Solution: Found
+Solution length: 19 moves
+Nodes visited: 107
+Maximum frontier size: 1336
+Execution time: 13 ms
+
+Solution Steps
+=============
+
+Step 0: Initial state
+
+        K
+..AAABBBB
+.......CC
+D...E..FF
+D...E.GGG
+D..HIIJJJ
+LM.H..NOP
+LMQQQQNOP
+
+Step 1: Move F left to (5,2)
+
+        K
+..AAABBBB
+.......CC
+D...EFF..
+D...E.GGG
+D..HIIJJJ
+LM.H..NOP
+LMQQQQNOP
+
+Step 2: Move C left to (5,1)
+
+        K
+..AAABBBB
+.....CC..
+D...EFF..
+D...E.GGG
+D..HIIJJJ
+LM.H..NOP
+LMQQQQNOP
+
+Step 3: Move G left to (5,3)
+
+        K
+..AAABBBB
+.....CC..
+D...EFF..
+D...EGGG.
+D..HIIJJJ
+LM.H..NOP
+LMQQQQNOP
+
+Step 4: Move A left to (1,0)
+
+        K
+.AAA.BBBB
+.....CC..
+D...EFF..
+D...EGGG.
+D..HIIJJJ
+LM.H..NOP
+LMQQQQNOP
+
+Step 5: Move B left to (4,0)
+
+        K
+.AAABBBB.
+.....CC..
+D...EFF..
+D...EGGG.
+D..HIIJJJ
+LM.H..NOP
+LMQQQQNOP
+
+Step 6: Move A left to (0,0)
+
+        K
+AAA.BBBB.
+.....CC..
+D...EFF..
+D...EGGG.
+D..HIIJJJ
+LM.H..NOP
+LMQQQQNOP
+
+Step 7: Move B left to (3,0)
+
+        K
+AAABBBB..
+.....CC..
+D...EFF..
+D...EGGG.
+D..HIIJJJ
+LM.H..NOP
+LMQQQQNOP
+
+Step 8: Move C left to (2,1)
+
+        K
+AAABBBB..
+..CC.....
+D...EFF..
+D...EGGG.
+D..HIIJJJ
+LM.H..NOP
+LMQQQQNOP
+
+Step 9: Move M up to (1,1)
+
+        K
+AAABBBB..
+.MCC.....
+DM..EFF..
+D...EGGG.
+D..HIIJJJ
+L..H..NOP
+L.QQQQNOP
+
+Step 10: Move E up to (4,1)
+
+        K
+AAABBBB..
+.MCCE....
+DM..EFF..
+D....GGG.
+D..HIIJJJ
+L..H..NOP
+L.QQQQNOP
+
+Step 11: Move G left to (4,3)
+
+        K
+AAABBBB..
+.MCCE....
+DM..EFF..
+D...GGG..
+D..HIIJJJ
+L..H..NOP
+L.QQQQNOP
+
+Step 12: Move D up to (0,1)
+
+        K
+AAABBBB..
+DMCCE....
+DM..EFF..
+D...GGG..
+...HIIJJJ
+L..H..NOP
+L.QQQQNOP
+
+Step 13: Move H up to (3,3)
+
+        K
+AAABBBB..
+DMCCE....
+DM..EFF..
+D..HGGG..
+...HIIJJJ
+L.....NOP
+L.QQQQNOP
+
+Step 14: Move M down to (1,2)
+
+        K
+AAABBBB..
+D.CCE....
+DM..EFF..
+DM.HGGG..
+...HIIJJJ
+L.....NOP
+L.QQQQNOP
+
+Step 15: Move Q left to (1,6)
+
+        K
+AAABBBB..
+D.CCE....
+DM..EFF..
+DM.HGGG..
+...HIIJJJ
+L.....NOP
+LQQQQ.NOP
+
+Step 16: Move H up to (3,2)
+
+        K
+AAABBBB..
+D.CCE....
+DM.HEFF..
+DM.HGGG..
+....IIJJJ
+L.....NOP
+LQQQQ.NOP
+
+Step 17: Move I left to (3,4)
+
+        K
+AAABBBB..
+D.CCE....
+DM.HEFF..
+DM.HGGG..
+...II.JJJ
+L.....NOP
+LQQQQ.NOP
+
+Step 18: Move J left to (5,4)
+
+        K
+AAABBBB..
+D.CCE....
+DM.HEFF..
+DM.HGGG..
+...IIJJJ.
+L.....NOP
+LQQQQ.NOP
+
+Step 19: Move P up to (8,0)
+
+        K
+AAABBBB.P
+D.CCE...P
+DM.HEFF..
+DM.HGGG..
+...IIJJJ.
+L.....NO.
+LQQQQ.NO.
+

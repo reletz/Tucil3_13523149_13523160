@@ -1,0 +1,23 @@
+Rush Hour Puzzle Solution
+=========================
+
+Board size: 6x6
+Exit position: (-1,3)
+Exit side: Left
+
+Algorithm: Uniform Cost Search
+Heuristic: None
+Solution: Not found
+Nodes visited: 7
+Maximum frontier size: 3
+Execution time: 1 ms
+
+No solution found.
+Initial state:
+
+ N.AABB
+ NCCDQQ
+ NEODFF
+KNEOPPG
+ NEO.HG
+ NIIIHG

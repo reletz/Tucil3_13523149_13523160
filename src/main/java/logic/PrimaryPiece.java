@@ -15,8 +15,8 @@ public class PrimaryPiece extends Piece {
    * @param label Karakter yang dipake buat nunjukin Block ini
    * @param shape Bentuk 2D dari Block ini
    */
-  public PrimaryPiece(char label, boolean[][] shape) {
-    super(label, shape);
+  public PrimaryPiece(char label, int size, boolean isHorizontal) {
+    super(label, size, isHorizontal);
     this.isHighlighted = false;
   }
   
@@ -27,8 +27,8 @@ public class PrimaryPiece extends Piece {
    * @param shape Bentuk 2D dari Block ini
    * @param isHighlighted Apakah Block ini perlu di-highlight atau nggak
    */
-  public PrimaryPiece(char label, boolean[][] shape, boolean isHighlighted) {
-    super(label, shape);
+  public PrimaryPiece(char label, int size, boolean isHorizontal, boolean isHighlighted) {
+    super(label, size, isHorizontal);
     this.isHighlighted = isHighlighted;
   }
   
@@ -39,29 +39,5 @@ public class PrimaryPiece extends Piece {
    */
   public boolean isHighlighted() {
     return isHighlighted;
-  }
-  
-  /**
-   * Nampilin Block ke layar konsol dengan gaya khusus kalo di-highlight.
-   * Block yang di-highlight bakal keliatan beda dari Block biasa.
-   * 
-   * @implNote Block yang di-highlight ditampilin pake tanda bintang (*) ngapit labelnya,
-   *           sedangkan Block yang nggak di-highlight pake tampilan standar dari parent class.
-   */
-  @Override
-  public void printBlock() {
-    if (!isHighlighted) {
-      super.printBlock();
-      return;
-    }
-    
-    // Tampilan khusus buat Block yang di-highlight
-    for (boolean[] row : getShape()) {
-      for (boolean cell : row) {
-        // Format khusus buat Block yang di-highlight (contoh: pake *)
-        System.out.print(cell ? "*" + getLabel() + "*" : "   ");
-      }
-      System.out.println();
-    }
   }
 }
